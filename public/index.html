@@ -136,7 +136,7 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-async function fetchData() {
+        async function fetchData() {
             try {
                 const response = await fetch('/api/data');
                 const data = await response.json();
