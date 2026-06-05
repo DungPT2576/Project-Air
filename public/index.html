@@ -15,25 +15,27 @@
         }
         h1 { text-align: center; color: #f0f0f0; margin-bottom: 30px; font-weight: 500;}
 
-        .weather-timeline {
+.weather-timeline {
             background: linear-gradient(180deg, #373b44 0%, #272a31 100%);
             border-radius: 15px;
             padding: 25px 20px;
             display: flex;
+            justify-content: space-between; /* Thêm dòng này để dàn đều sang 2 bên mép */
             overflow-x: auto;
-            gap: 40px;
+            /* Đã xóa dòng gap: 40px; ở đây để trình duyệt tự động chia khoảng cách */
             margin-bottom: 30px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
         
-        .weather-timeline::-webkit-scrollbar { display: none; } 
-
         .timeline-item {
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex: 1; /* Thêm dòng này để các cột tự co giãn lấp đầy 100% không gian */
             min-width: 60px;
         }
+
+        .weather-timeline::-webkit-scrollbar { display: none; } 
         .t-time { font-size: 15px; color: #b0b3b8; font-weight: bold; margin-bottom: 15px; }
         .t-temp { font-size: 22px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; color: #fff;}
         .t-icon { color: #64b5f6; font-size: 20px; }
@@ -119,15 +121,16 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        async function fetchData() {
+async function fetchData() {
             try {
                 const response = await fetch('/api/data');
                 const data = await response.json();
                 
                 if (data.length > 0) {
+                    // CÁCH LỌC THỜI GIAN MỚI (CHỐNG LỖI 5/6/2)
                     const labels = data.map(d => {
-                        let timeStr = d.timestamp.split(' ')[1]; 
-                        return timeStr ? timeStr.substring(0, 5) : d.timestamp;
+                        let match = d.timestamp.match(/\d{1,2}:\d{2}/);
+                        return match ? match[0] : d.timestamp;
                     });
 
                     pmChart.data.labels = labels;
@@ -149,8 +152,9 @@
                     const recentData = data.slice(-8); 
                     
                     recentData.forEach((item, index) => {
-                        let shortTime = item.timestamp.split(' ')[1];
-                        shortTime = shortTime ? shortTime.substring(0, 5) : 'Now';
+                        // ÁP DỤNG CÁCH LỌC MỚI CHO BẢNG NGANG
+                        let match = item.timestamp.match(/\d{1,2}:\d{2}/);
+                        let shortTime = match ? match[0] : 'Now';
                         
                         let timeLabel = (index === recentData.length - 1) ? "Now" : shortTime;
 
