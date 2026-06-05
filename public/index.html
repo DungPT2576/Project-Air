@@ -36,7 +36,22 @@
         }
 
         .weather-timeline::-webkit-scrollbar { display: none; } 
-        .t-time { font-size: 15px; color: #b0b3b8; font-weight: bold; margin-bottom: 15px; }
+        .t-time-box { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin-bottom: 15px; 
+        }
+        .t-time { 
+            font-size: 15px; 
+            color: #b0b3b8; 
+            font-weight: bold; 
+        }
+        .t-date { 
+            font-size: 12px; 
+            color: #7a7e85; /* Màu xám nhạt hơn để làm nền cho Giờ */
+            margin-top: 3px; 
+        }
         .t-temp { font-size: 22px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; color: #fff;}
         .t-icon { color: #64b5f6; font-size: 20px; }
         .t-hum { font-size: 14px; color: #9e9e9e; display: flex; align-items: center; gap: 5px; font-weight: 500;}
@@ -127,7 +142,7 @@ async function fetchData() {
                 const data = await response.json();
                 
                 if (data.length > 0) {
-                    // CÁCH LỌC THỜI GIAN MỚI (CHỐNG LỖI 5/6/2)
+                    // Cập nhật biểu đồ (Vẫn giữ Giờ:Phút cho gọn trên trục X biểu đồ)
                     const labels = data.map(d => {
                         let match = d.timestamp.match(/\d{1,2}:\d{2}/);
                         return match ? match[0] : d.timestamp;
@@ -152,16 +167,22 @@ async function fetchData() {
                     const recentData = data.slice(-8); 
                     
                     recentData.forEach((item, index) => {
-                        // ÁP DỤNG CÁCH LỌC MỚI CHO BẢNG NGANG
-                        let match = item.timestamp.match(/\d{1,2}:\d{2}/);
-                        let shortTime = match ? match[0] : 'Now';
+                        // TÁCH GIỜ:PHÚT:GIÂY VÀ NGÀY/THÁNG
+                        let timeMatch = item.timestamp.match(/\d{1,2}:\d{2}:\d{2}/);
+                        let dateMatch = item.timestamp.match(/\d{1,2}\/\d{1,2}/);
+
+                        let fullTime = timeMatch ? timeMatch[0] : 'Now';
+                        let shortDate = dateMatch ? dateMatch[0] : '';
                         
-                        let timeLabel = (index === recentData.length - 1) ? "Now" : shortTime;
+                        let timeLabel = (index === recentData.length - 1) ? "Now" : fullTime;
 
                         const div = document.createElement('div');
                         div.className = 'timeline-item';
                         div.innerHTML = `
-                            <div class="t-time">${timeLabel}</div>
+                            <div class="t-time-box">
+                                <div class="t-time">${timeLabel}</div>
+                                <div class="t-date">${shortDate}</div>
+                            </div>
                             <div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°</div>
                             <div class="t-hum">💧 ${item.hum}%</div>
                         `;
@@ -169,7 +190,7 @@ async function fetchData() {
                     });
                 }
             } catch (error) {
-                console.error(error);
+                console.error("Lỗi khi tải dữ liệu:", error);
             }
         }
 
