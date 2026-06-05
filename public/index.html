@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dữ liệu thời tiết</title>
+    <title>Weather Data</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Cài đặt tông màu Dark Mode */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #1e2025; 
@@ -16,7 +15,6 @@
         }
         h1 { text-align: center; color: #f0f0f0; margin-bottom: 30px; font-weight: 500;}
 
-        /* --- 1. BẢNG DỮ LIỆU NGANG (GIỐNG ẢNH BẠN YÊU CẦU) --- */
         .weather-timeline {
             background: linear-gradient(180deg, #373b44 0%, #272a31 100%);
             border-radius: 15px;
@@ -28,7 +26,6 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
         
-        /* Ẩn thanh cuộn (scroll bar) cho đẹp */
         .weather-timeline::-webkit-scrollbar { display: none; } 
 
         .timeline-item {
@@ -38,34 +35,10 @@
             min-width: 60px;
         }
         .t-time { font-size: 15px; color: #b0b3b8; font-weight: bold; margin-bottom: 15px; }
-        .t-temp { font-size: 22px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; color: #fff;}
-        .t-icon { color: #64b5f6; font-size: 20px; } /* Màu xanh của icon mây/mưa */
-        
-        /* Dấu chấm và đường kẻ nối */
-        .t-node { 
-            width: 8px; 
-            height: 8px; 
-            background: #ffccaa; 
-            border-radius: 50%; 
-            margin: 15px 0; 
-            position: relative; 
-            box-shadow: 0 0 5px rgba(255, 204, 170, 0.8);
-        }
-        .t-node::before {
-            content: ''; 
-            position: absolute; 
-            top: 3px; 
-            left: -55px; /* Kéo dài đường kẻ sang ô bên trái */
-            width: 50px; 
-            height: 2px; 
-            background: rgba(255, 204, 170, 0.4);
-        }
-        /* Ẩn đường kẻ ở ô đầu tiên để không bị thò ra ngoài */
-        .timeline-item:first-child .t-node::before { display: none; }
-
+        .t-temp { font-size: 22px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; color: #fff;}
+        .t-icon { color: #64b5f6; font-size: 20px; }
         .t-hum { font-size: 14px; color: #9e9e9e; display: flex; align-items: center; gap: 5px; font-weight: 500;}
 
-        /* --- 2. KHU VỰC 3 BIỂU ĐỒ --- */
         .charts-container {
             display: grid;
             grid-template-columns: 1fr;
@@ -91,7 +64,7 @@
 </head>
 <body>
 
-    <h1>Theo dõi chất lượng không khí thời gian thực</h1>
+    <h1>Theo Dõi Không Khí Thời Gian Thực</h1>
 
     <div class="weather-timeline" id="timeline-container">
         <div style="color: #888; width: 100%; text-align: center;">Đang chờ dữ liệu từ thiết bị...</div>
@@ -104,22 +77,20 @@
         </div>
         
         <div class="chart-box">
-            <div class="chart-title">Biến thiên Nhiệt độ (°C)</div>
+            <div class="chart-title">Nhiệt độ (°C)</div>
             <canvas id="tempChart"></canvas>
         </div>
 
         <div class="chart-box">
-            <div class="chart-title">Biến thiên Độ ẩm (%)</div>
+            <div class="chart-title">Độ ẩm (%)</div>
             <canvas id="humChart"></canvas>
         </div>
     </div>
 
     <script>
-        // Cấu hình chung cho viền và chữ của biểu đồ nền tối
         Chart.defaults.color = '#b0b3b8';
         Chart.defaults.borderColor = '#3a3f4a';
 
-        // 1. Khởi tạo biểu đồ Bụi
         const pmCtx = document.getElementById('pmChart').getContext('2d');
         const pmChart = new Chart(pmCtx, {
             type: 'line',
@@ -130,7 +101,6 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // 2. Khởi tạo biểu đồ Nhiệt độ
         const tempCtx = document.getElementById('tempChart').getContext('2d');
         const tempChart = new Chart(tempCtx, {
             type: 'line',
@@ -140,7 +110,6 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // 3. Khởi tạo biểu đồ Độ ẩm
         const humCtx = document.getElementById('humChart').getContext('2d');
         const humChart = new Chart(humCtx, {
             type: 'line',
@@ -150,7 +119,6 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // Hàm lấy dữ liệu từ Server và cập nhật Giao diện
         async function fetchData() {
             try {
                 const response = await fetch('/api/data');
@@ -158,12 +126,10 @@
                 
                 if (data.length > 0) {
                     const labels = data.map(d => {
-                        // Lọc chỉ lấy Giờ:Phút từ chuỗi thời gian cho gọn
                         let timeStr = d.timestamp.split(' ')[1]; 
                         return timeStr ? timeStr.substring(0, 5) : d.timestamp;
                     });
 
-                    // Cập nhật 3 biểu đồ
                     pmChart.data.labels = labels;
                     pmChart.data.datasets[0].data = data.map(d => d.pm25);
                     pmChart.data.datasets[1].data = data.map(d => d.pm10);
@@ -177,19 +143,15 @@
                     humChart.data.datasets[0].data = data.map(d => d.hum);
                     humChart.update();
 
-                    // Cập nhật Bảng dữ liệu ngang (lấy 8 giá trị mới nhất)
                     const timelineContainer = document.getElementById('timeline-container');
-                    timelineContainer.innerHTML = ''; // Xóa chữ chờ dữ liệu
+                    timelineContainer.innerHTML = ''; 
 
-                    // Lấy tối đa 8 phần tử cuối cùng để nhét vào thanh cuộn
                     const recentData = data.slice(-8); 
                     
                     recentData.forEach((item, index) => {
-                        // Rút gọn giờ (VD: 21:05)
                         let shortTime = item.timestamp.split(' ')[1];
                         shortTime = shortTime ? shortTime.substring(0, 5) : 'Now';
                         
-                        // Nếu là phần tử cuối cùng, chữ in đậm hiển thị "Now"
                         let timeLabel = (index === recentData.length - 1) ? "Now" : shortTime;
 
                         const div = document.createElement('div');
@@ -197,18 +159,16 @@
                         div.innerHTML = `
                             <div class="t-time">${timeLabel}</div>
                             <div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°</div>
-                            <div class="t-node"></div>
                             <div class="t-hum">💧 ${item.hum}%</div>
                         `;
                         timelineContainer.appendChild(div);
                     });
                 }
             } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
+                console.error(error);
             }
         }
 
-        // Tự động tải lại dữ liệu mỗi 5 giây
         setInterval(fetchData, 5000);
         fetchData();
     </script>
