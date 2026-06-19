@@ -104,98 +104,81 @@
         </div>
     </div>
 
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script>
         Chart.defaults.color = '#b0b3b8';
         Chart.defaults.borderColor = '#3a3f4a';
 
-        const pmCtx = document.getElementById('pmChart').getContext('2d');
-        const pmChart = new Chart(pmCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [
-                { label: 'PM2.5', data: [], borderColor: '#ff5252', backgroundColor: 'rgba(255, 82, 82, 0.1)', tension: 0.3, fill: true },
-                { label: 'PM10', data: [], borderColor: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', tension: 0.3, fill: true }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false }
+        // Khởi tạo 3 biểu đồ (giữ nguyên cấu trúc cũ)
+        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ff5252', backgroundColor: 'rgba(255, 82, 82, 0.1)', tension: 0.3, fill: true }, { label: 'PM10', data: [], borderColor: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', tension: 0.3, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
+        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#ffeb3b', backgroundColor: 'rgba(255, 235, 59, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
+        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#00e5ff', backgroundColor: 'rgba(0, 229, 255, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
+
+        // Mảng lưu trữ dữ liệu cục bộ trên web (Tối đa 8 phần tử)
+        let dataHistory = [];
+        const timelineContainer = document.getElementById('timeline-container');
+
+        // KẾT NỐI MQTT QUA WEBSOCKETS
+        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        const myTopic = 'airsense/hust/tram_01'; // Chủ đề (Topic) để lắng nghe
+
+        mqttClient.on('connect', () => {
+            console.log('✅ Đã kết nối MQTT Broker!');
+            mqttClient.subscribe(myTopic);
+            timelineContainer.innerHTML = '<div style="color: #888; width: 100%; text-align: center;">Đã kết nối trực tiếp đến ESP32. Đang chờ dữ liệu...</div>';
         });
 
-        const tempCtx = document.getElementById('tempChart').getContext('2d');
-        const tempChart = new Chart(tempCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [
-                { label: 'Nhiệt độ (°C)', data: [], borderColor: '#ffeb3b', backgroundColor: 'rgba(255, 235, 59, 0.1)', tension: 0.4, fill: true }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false }
+        mqttClient.on('message', (topic, message) => {
+            // Khi có dữ liệu mới từ ESP32 đẩy tới
+            const payload = JSON.parse(message.toString());
+            
+            // Tạo mốc thời gian thực
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0]; // Giờ:Phút:Giây
+            const dateStr = `${now.getDate()}/${now.getMonth() + 1}`; // Ngày/Tháng
+            
+            payload.timeLabel = timeStr;
+            payload.dateLabel = dateStr;
+
+            // Thêm vào mảng và giới hạn 8 phần tử
+            dataHistory.push(payload);
+            if (dataHistory.length > 8) dataHistory.shift();
+
+            // CẬP NHẬT BIỂU ĐỒ
+            const labels = dataHistory.map(d => d.timeLabel.substring(0, 5)); // Chỉ lấy Giờ:Phút cho biểu đồ
+            
+            pmChart.data.labels = labels;
+            pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25);
+            pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10);
+            pmChart.update();
+
+            tempChart.data.labels = labels;
+            tempChart.data.datasets[0].data = dataHistory.map(d => d.temp);
+            tempChart.update();
+
+            humChart.data.labels = labels;
+            humChart.data.datasets[0].data = dataHistory.map(d => d.hum);
+            humChart.update();
+
+            // CẬP NHẬT THANH TIMELINE
+            timelineContainer.innerHTML = ''; 
+            dataHistory.forEach((item, index) => {
+                let isNow = (index === dataHistory.length - 1);
+                let timeDisplay = isNow ? "Now" : item.timeLabel;
+
+                const div = document.createElement('div');
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <div class="t-time-box">
+                        <div class="t-time">${timeDisplay}</div>
+                        <div class="t-date">${item.dateLabel}</div>
+                    </div>
+                    <div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°</div>
+                    <div class="t-hum">💧 ${item.hum}%</div>
+                `;
+                timelineContainer.appendChild(div);
+            });
         });
-
-        const humCtx = document.getElementById('humChart').getContext('2d');
-        const humChart = new Chart(humCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [
-                { label: 'Độ ẩm (%)', data: [], borderColor: '#00e5ff', backgroundColor: 'rgba(0, 229, 255, 0.1)', tension: 0.4, fill: true }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-
-        async function fetchData() {
-            try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
-                
-                if (data.length > 0) {
-                    // Cập nhật biểu đồ (Vẫn giữ Giờ:Phút cho gọn trên trục X biểu đồ)
-                    const labels = data.map(d => {
-                        let match = d.timestamp.match(/\d{1,2}:\d{2}/);
-                        return match ? match[0] : d.timestamp;
-                    });
-
-                    pmChart.data.labels = labels;
-                    pmChart.data.datasets[0].data = data.map(d => d.pm25);
-                    pmChart.data.datasets[1].data = data.map(d => d.pm10);
-                    pmChart.update();
-
-                    tempChart.data.labels = labels;
-                    tempChart.data.datasets[0].data = data.map(d => d.temp);
-                    tempChart.update();
-
-                    humChart.data.labels = labels;
-                    humChart.data.datasets[0].data = data.map(d => d.hum);
-                    humChart.update();
-
-                    const timelineContainer = document.getElementById('timeline-container');
-                    timelineContainer.innerHTML = ''; 
-
-                    const recentData = data.slice(-8); 
-                    
-                    recentData.forEach((item, index) => {
-                        // TÁCH GIỜ:PHÚT:GIÂY VÀ NGÀY/THÁNG
-                        let timeMatch = item.timestamp.match(/\d{1,2}:\d{2}:\d{2}/);
-                        let dateMatch = item.timestamp.match(/\d{1,2}\/\d{1,2}/);
-
-                        let fullTime = timeMatch ? timeMatch[0] : 'Now';
-                        let shortDate = dateMatch ? dateMatch[0] : '';
-                        
-                        let timeLabel = (index === recentData.length - 1) ? "Now" : fullTime;
-
-                        const div = document.createElement('div');
-                        div.className = 'timeline-item';
-                        div.innerHTML = `
-                            <div class="t-time-box">
-                                <div class="t-time">${timeLabel}</div>
-                                <div class="t-date">${shortDate}</div>
-                            </div>
-                            <div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°</div>
-                            <div class="t-hum">💧 ${item.hum}%</div>
-                        `;
-                        timelineContainer.appendChild(div);
-                    });
-                }
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
-            }
-        }
-
-        setInterval(fetchData, 5000);
-        fetchData();
     </script>
 </body>
 </html>
