@@ -104,80 +104,72 @@
         </div>
     </div>
 
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script>
         Chart.defaults.color = '#b0b3b8';
         Chart.defaults.borderColor = '#3a3f4a';
 
-        // Khởi tạo 3 biểu đồ (giữ nguyên cấu trúc cũ)
         const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ff5252', backgroundColor: 'rgba(255, 82, 82, 0.1)', tension: 0.3, fill: true }, { label: 'PM10', data: [], borderColor: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', tension: 0.3, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
         const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#ffeb3b', backgroundColor: 'rgba(255, 235, 59, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
         const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#00e5ff', backgroundColor: 'rgba(0, 229, 255, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
 
-        // Mảng lưu trữ dữ liệu cục bộ trên web (Tối đa 8 phần tử)
         let dataHistory = [];
         const timelineContainer = document.getElementById('timeline-container');
 
-        // KẾT NỐI MQTT QUA WEBSOCKETS
-        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-        const myTopic = 'airsense/hust/tram_01'; // Chủ đề (Topic) để lắng nghe
+        // HÀM VẼ LẠI GIAO DIỆN (Dùng chung cho cả API và MQTT)
+        function renderUI() {
+            if(dataHistory.length === 0) return;
+            
+            const labels = dataHistory.map(d => d.timeLabel.substring(0, 5));
+            
+            pmChart.data.labels = labels; pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25); pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10); pmChart.update();
+            tempChart.data.labels = labels; tempChart.data.datasets[0].data = dataHistory.map(d => d.temp); tempChart.update();
+            humChart.data.labels = labels; humChart.data.datasets[0].data = dataHistory.map(d => d.hum); humChart.update();
 
+            timelineContainer.innerHTML = ''; 
+            const recentData = dataHistory.slice(-8); // Chỉ lấy 8 điểm hiển thị thanh ngang
+            recentData.forEach((item, index) => {
+                let timeDisplay = (index === recentData.length - 1) ? "Now" : item.timeLabel;
+                const div = document.createElement('div'); div.className = 'timeline-item';
+                div.innerHTML = `<div class="t-time-box"><div class="t-time">${timeDisplay}</div><div class="t-date">${item.dateLabel}</div></div><div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°</div><div class="t-hum">💧 ${item.hum}%</div>`;
+                timelineContainer.appendChild(div);
+            });
+        }
+
+        // BƯỚC A: Lấy lịch sử từ Render khi vừa mở web
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/data');
+                const history = await response.json();
+                if(history && history.length > 0) {
+                    dataHistory = history;
+                    renderUI();
+                } else {
+                    timelineContainer.innerHTML = '<div style="color: #888; width: 100%; text-align: center;">Chưa có dữ liệu. Đang chờ ESP32 gửi lên...</div>';
+                }
+            } catch(e) { console.error("Lỗi lấy lịch sử:", e); }
+        }
+
+        // BƯỚC B: Chuyển sang kết nối MQTT qua WebSockets để nhận Real-time
+        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         mqttClient.on('connect', () => {
-            console.log('✅ Đã kết nối MQTT Broker!');
-            mqttClient.subscribe(myTopic);
-            timelineContainer.innerHTML = '<div style="color: #888; width: 100%; text-align: center;">Đã kết nối trực tiếp đến ESP32. Đang chờ dữ liệu...</div>';
+            console.log('✅ Giao diện đã kết nối trực tiếp MQTT!');
+            mqttClient.subscribe('airsense/hust/tram_01');
         });
 
         mqttClient.on('message', (topic, message) => {
-            // Khi có dữ liệu mới từ ESP32 đẩy tới
             const payload = JSON.parse(message.toString());
-            
-            // Tạo mốc thời gian thực
             const now = new Date();
-            const timeStr = now.toTimeString().split(' ')[0]; // Giờ:Phút:Giây
-            const dateStr = `${now.getDate()}/${now.getMonth() + 1}`; // Ngày/Tháng
+            payload.timeLabel = now.toTimeString().split(' ')[0];
+            payload.dateLabel = `${now.getDate()}/${now.getMonth() + 1}`;
             
-            payload.timeLabel = timeStr;
-            payload.dateLabel = dateStr;
-
-            // Thêm vào mảng và giới hạn 8 phần tử
             dataHistory.push(payload);
-            if (dataHistory.length > 8) dataHistory.shift();
-
-            // CẬP NHẬT BIỂU ĐỒ
-            const labels = dataHistory.map(d => d.timeLabel.substring(0, 5)); // Chỉ lấy Giờ:Phút cho biểu đồ
-            
-            pmChart.data.labels = labels;
-            pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25);
-            pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10);
-            pmChart.update();
-
-            tempChart.data.labels = labels;
-            tempChart.data.datasets[0].data = dataHistory.map(d => d.temp);
-            tempChart.update();
-
-            humChart.data.labels = labels;
-            humChart.data.datasets[0].data = dataHistory.map(d => d.hum);
-            humChart.update();
-
-            // CẬP NHẬT THANH TIMELINE
-            timelineContainer.innerHTML = ''; 
-            dataHistory.forEach((item, index) => {
-                let isNow = (index === dataHistory.length - 1);
-                let timeDisplay = isNow ? "Now" : item.timeLabel;
-
-                const div = document.createElement('div');
-                div.className = 'timeline-item';
-                div.innerHTML = `
-                    <div class="t-time-box">
-                        <div class="t-time">${timeDisplay}</div>
-                        <div class="t-date">${item.dateLabel}</div>
-                    </div>
-                    <div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°</div>
-                    <div class="t-hum">💧 ${item.hum}%</div>
-                `;
-                timelineContainer.appendChild(div);
-            });
+            if (dataHistory.length > 50) dataHistory.shift(); // Giữ tối đa 50 điểm trên đồ thị
+            renderUI();
         });
+
+        // Chạy hàm lấy lịch sử khi trang web load xong
+        loadHistory();
     </script>
 </body>
 </html>
