@@ -12,7 +12,7 @@ let dataHistory = []; // Bộ nhớ đệm RAM lưu 50 điểm
 
 // 1. KẾT NỐI SERVER VỚI MQTT BROKER
 const mqttClient = mqtt.connect('mqtt://broker.emqx.io:1883');
-const myTopic = 'airsense/hust/tram_01'; // Phải giống hệt trong code ESP32
+const myTopic = 'airsense/hust/tram_do_cua_dung_2507'; // Phải giống hệt trong code ESP32
 
 mqttClient.on('connect', () => {
     console.log('✅ Máy chủ Render đã kết nối thành công với MQTT Broker!');

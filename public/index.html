@@ -154,7 +154,9 @@
         const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         mqttClient.on('connect', () => {
             console.log('✅ Giao diện đã kết nối trực tiếp MQTT!');
-            mqttClient.subscribe('airsense/hust/tram_01');
+            mqttClient.subscribe('airsense/hust/tram_do_cua_dung_2507', (err) => {
+                if(err) console.error("Lỗi đăng ký topic:", err);
+            });
         });
 
         mqttClient.on('message', (topic, message) => {
