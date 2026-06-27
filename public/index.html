@@ -43,100 +43,104 @@
         </div>
     </div>
 
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script>
         // CẤU HÌNH MÀU SẮC MẶC ĐỊNH CHO BIỂU ĐỒ CHART.JS
         Chart.defaults.color = '#b0b3b8';
         Chart.defaults.borderColor = '#3a3f4a';
 
-        const pmCtx = document.getElementById('pmChart').getContext('2d');
-        const pmChart = new Chart(pmCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [
-                { label: 'PM2.5', data: [], borderColor: '#ff5252', backgroundColor: 'rgba(255, 82, 82, 0.1)', tension: 0.3, fill: true },
-                { label: 'PM10', data: [], borderColor: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', tension: 0.3, fill: true }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        // KHỞI TẠO 3 BIỂU ĐỒ
+        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ff5252', backgroundColor: 'rgba(255, 82, 82, 0.1)', tension: 0.3, fill: true }, { label: 'PM10', data: [], borderColor: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.1)', tension: 0.3, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
+        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#ffeb3b', backgroundColor: 'rgba(255, 235, 59, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
+        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#00e5ff', backgroundColor: 'rgba(0, 229, 255, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false } });
 
-        const tempCtx = document.getElementById('tempChart').getContext('2d');
-        const tempChart = new Chart(tempCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [
-                { label: 'Nhiệt độ (°C)', data: [], borderColor: '#ffeb3b', backgroundColor: 'rgba(255, 235, 59, 0.1)', tension: 0.4, fill: true }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        let dataHistory = [];
+        const timelineContainer = document.getElementById('timeline-container');
+        const statusText = document.getElementById('connection-status');
 
-        const humCtx = document.getElementById('humChart').getContext('2d');
-        const humChart = new Chart(humCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [
-                { label: 'Độ ẩm (%)', data: [], borderColor: '#00e5ff', backgroundColor: 'rgba(0, 229, 255, 0.1)', tension: 0.4, fill: true }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        // ==========================================
+        // HÀM VẼ LẠI GIAO DIỆN (Dùng chung cho cả API và MQTT)
+        // ==========================================
+        function renderUI() {
+            if(dataHistory.length === 0) return;
+            
+            // Cập nhật biểu đồ (Lấy giờ phút)
+            const labels = dataHistory.map(d => d.timeLabel.substring(0, 5));
+            
+            pmChart.data.labels = labels; 
+            pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25); 
+            pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10); 
+            pmChart.update();
+            
+            tempChart.data.labels = labels; 
+            tempChart.data.datasets[0].data = dataHistory.map(d => d.temp); 
+            tempChart.update();
+            
+            humChart.data.labels = labels; 
+            humChart.data.datasets[0].data = dataHistory.map(d => d.hum); 
+            humChart.update();
 
-        async function fetchData() {
-            try {
-                const response = await fetch('/api/data');
-                const data = await response.json();
-                
-                if (data.length > 0) {
-                    // Cập nhật biểu đồ (Vẫn giữ Giờ:Phút cho gọn trên trục X biểu đồ)
-                    const labels = data.map(d => {
-                        let match = d.timestamp.match(/\d{1,2}:\d{2}/);
-                        return match ? match[0] : d.timestamp;
-                    });
-
-                    pmChart.data.labels = labels;
-                    pmChart.data.datasets[0].data = data.map(d => d.pm25);
-                    pmChart.data.datasets[1].data = data.map(d => d.pm10);
-                    pmChart.update();
-
-                    tempChart.data.labels = labels;
-                    tempChart.data.datasets[0].data = data.map(d => d.temp);
-                    tempChart.update();
-
-                    humChart.data.labels = labels;
-                    humChart.data.datasets[0].data = data.map(d => d.hum);
-                    humChart.update();
-
-                    const timelineContainer = document.getElementById('timeline-container');
-                    timelineContainer.innerHTML = ''; 
-
-                    const recentData = data.slice(-8); 
-                    
-                    recentData.forEach((item, index) => {
-                        // TÁCH GIỜ:PHÚT:GIÂY VÀ NGÀY/THÁNG
-                        let timeMatch = item.timestamp.match(/\d{1,2}:\d{2}:\d{2}/);
-                        let dateMatch = item.timestamp.match(/\d{1,2}\/\d{1,2}/);
-
-                        let fullTime = timeMatch ? timeMatch[0] : 'Now';
-                        let shortDate = dateMatch ? dateMatch[0] : '';
-                        
-                        let timeLabel = (index === recentData.length - 1) ? "Now" : fullTime;
-
-                        const div = document.createElement('div');
-                        div.className = 'timeline-item';
-                        div.innerHTML = `
-                            <div class="t-time-box">
-                                <div class="t-time">${timeLabel}</div>
-                                <div class="t-date">${shortDate}</div>
-                            </div>
-                            <div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°</div>
-                            <div class="t-hum">💧 ${item.hum}%</div>
-                        `;
-                        timelineContainer.appendChild(div);
-                    });
-                }
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
-            }
+            // Cập nhật thanh Timeline (Hiển thị 8 điểm gần nhất)
+            timelineContainer.innerHTML = ''; 
+            const recentData = dataHistory.slice(-8); 
+            recentData.forEach((item, index) => {
+                let timeDisplay = (index === recentData.length - 1) ? "Now" : item.timeLabel;
+                const div = document.createElement('div'); 
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <div class="t-time-box">
+                        <div class="t-time">${timeDisplay}</div>
+                        <div class="t-date">${item.dateLabel}</div>
+                    </div>
+                    <div class="t-temp"><span class="t-icon">☁️</span> ${item.temp}°C</div>
+                    <div class="t-hum">💧 ${item.hum}%</div>
+                `;
+                timelineContainer.appendChild(div);
+            });
         }
 
-        setInterval(fetchData, 5000);
-        fetchData();
+        // ==========================================
+        // BƯỚC 1: TẢI LỊCH SỬ TỪ SERVER KHI MỞ TRANG
+        // ==========================================
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/data');
+                const history = await response.json();
+                if(history && history.length > 0) {
+                    dataHistory = history;
+                    renderUI();
+                } else {
+                    timelineContainer.innerHTML = '<div style="color: #888; width: 100%; text-align: center;">Chưa có dữ liệu. Đang chờ ESP32 gửi lên...</div>';
+                }
+            } catch(e) { console.error("Lỗi lấy lịch sử:", e); }
+        }
+
+        // ==========================================
+        // BƯỚC 2: KẾT NỐI MQTT QUA WEBSOCKETS (REAL-TIME)
+        // ==========================================
+        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        const myTopicUI = 'airsense/hust/tiendung_2507'; // Đã đồng bộ Topic mới
+
+        mqttClient.on('connect', () => {
+            statusText.innerText = "Trạng thái: Đã kết nối MQTT Real-time 🟢";
+            statusText.style.color = "#4caf50";
+            mqttClient.subscribe(myTopicUI);
+        });
+
+        mqttClient.on('message', (topic, message) => {
+            const payload = JSON.parse(message.toString());
+            const now = new Date();
+            
+            // Xử lý múi giờ và nhãn thời gian trên trình duyệt
+            payload.timeLabel = now.toLocaleTimeString('vi-VN', { hour12: false });
+            payload.dateLabel = now.toLocaleDateString('vi-VN');
+            
+            dataHistory.push(payload);
+            if (dataHistory.length > 50) dataHistory.shift(); // Giữ tối đa 50 điểm
+            renderUI();
+        });
+
+        // Chạy ngay khi tải trang
+        loadHistory();
     </script>
 </body>
 </html>
