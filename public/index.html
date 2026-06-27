@@ -8,13 +8,14 @@
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         :root {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
-            --text-sub: #94a3b8;
-            --border: #334155;
+            /* Tông màu sáng (Light Mode) */
+            --bg-main: #f0f2f5; /* Nền tổng thể màu xám cực nhạt giúp dịu mắt */
+            --bg-card: #ffffff; /* Nền các thẻ box màu trắng tinh */
+            --text-main: #1e293b; /* Chữ chính màu xám đen đậm */
+            --text-sub: #64748b; /* Chữ phụ/chú thích màu xám vừa */
+            --border: #e2e8f0; /* Màu viền thẻ nhạt */
             
-            /* Màu cảnh báo chuẩn IQAir */
+            /* Màu cảnh báo chuẩn IQAir (Giữ nguyên vì mang tính tiêu chuẩn) */
             --aqi-good: #10b981;
             --aqi-mod: #f59e0b;
             --aqi-unhealthy-sub: #f97316;
@@ -42,11 +43,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--border);
             padding-bottom: 16px;
         }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
-        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; background: #334155; color: var(--text-sub); }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #0f172a; }
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #e2e8f0; color: #475569; }
 
         /* Khối tổng quan kiểu IQAir */
         .main-overview {
@@ -62,18 +63,18 @@
         .aqi-banner {
             border-radius: 16px;
             padding: 32px;
-            color: #ffffff;
+            color: #ffffff; /* Chữ trong banner luôn trắng để nổi trên nền màu cảnh báo */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
             transition: all 0.5s ease;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         .aqi-value { font-size: 64px; font-weight: 800; line-height: 1; margin: 12px 0; }
-        .aqi-label { font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .aqi-desc { font-size: 14px; opacity: 0.9; margin-top: 8px; }
+        .aqi-label { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .aqi-desc { font-size: 14px; opacity: 0.95; margin-top: 8px; font-weight: 500; }
 
         /* Lưới thẻ chỉ số phụ */
         .stats-grid {
@@ -89,10 +90,11 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* Đổ bóng nhẹ giúp box nổi lên */
         }
-        .stat-title { font-size: 14px; color: var(--text-sub); font-weight: 500; }
-        .stat-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: var(--text-main); }
-        .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 400; }
+        .stat-title { font-size: 14px; color: var(--text-sub); font-weight: 600; }
+        .stat-value { font-size: 28px; font-weight: 800; margin-top: 8px; color: var(--text-main); }
+        .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* Đồ thị */
         .charts-section {
@@ -106,6 +108,7 @@
             border-radius: 16px;
             padding: 20px;
             height: 260px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
         }
 
         /* Lịch sử dạng Timeline */
@@ -114,11 +117,12 @@
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
         }
-        .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--text-sub); }
+        .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
         .timeline-scroll { overflow-x: auto; display: flex; gap: 12px; padding-bottom: 8px; }
         .timeline-card {
-            background: var(--bg-main);
+            background: #f8fafc; /* Màu xám siêu nhạt cho timeline card */
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 12px 16px;
@@ -126,9 +130,9 @@
             flex-shrink: 0;
             text-align: center;
         }
-        .tl-time { font-weight: 600; font-size: 14px; color: var(--text-main); }
-        .tl-date { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; }
-        .tl-param { font-size: 12px; margin-top: 4px; font-weight: 500; }
+        .tl-time { font-weight: 700; font-size: 14px; color: var(--text-main); }
+        .tl-date { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 500; }
+        .tl-param { font-size: 13px; margin-top: 4px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -157,11 +161,11 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">Nhiệt độ môi trường</div>
-                    <div class="stat-value" id="val-temp" style="color: #ffeb3b;">-- <span class="stat-unit">°C</span></div>
+                    <div class="stat-value" id="val-temp" style="color: #f59e0b;">-- <span class="stat-unit">°C</span></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title">Độ ẩm tương đối</div>
-                    <div class="stat-value" id="val-hum" style="color: #00e5ff;">-- <span class="stat-unit">%</span></div>
+                    <div class="stat-value" id="val-hum" style="color: #0ea5e9;">-- <span class="stat-unit">%</span></div>
                 </div>
             </div>
         </div>
@@ -180,20 +184,20 @@
     </div>
 
     <script>
-        // Thiết lập phông nền mặc định cho Chart.js phẳng, mượt
-        Chart.defaults.color = '#94a3b8';
-        Chart.defaults.borderColor = 'rgba(51, 65, 85, 0.5)';
+        // CẤU HÌNH LẠI MÀU BIỂU ĐỒ CHO GIAO DIỆN SÁNG
+        Chart.defaults.color = '#64748b'; // Chữ trục tung/trục hoành màu xám đậm
+        Chart.defaults.borderColor = '#e2e8f0'; // Kẻ ô lưới biểu đồ màu xám nhạt
 
         // Khởi tạo đồ thị
-        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ff5252', backgroundColor: 'rgba(255, 82, 82, 0.05)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#ff9800', backgroundColor: 'rgba(255, 152, 0, 0.05)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
-        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#ffeb3b', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
-        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#00e5ff', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
+        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
+        // Cập nhật màu đường kẻ nhiệt ẩm đậm hơn cho dễ nhìn
+        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
+        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
 
         let dataHistory = [];
         const timeline = document.getElementById('timeline');
         const statusText = document.getElementById('status');
 
-        // Hàm phân tích chỉ số và đổi màu Banner theo chuẩn Hoa Kỳ (US AQI) áp dụng trên các web lớn
         void function updateAQIBanner(pm25) {
             const card = document.getElementById('aqi-card');
             const status = document.getElementById('aqi-status');
@@ -202,7 +206,7 @@
 
             if (!pm25 && pm25 !== 0) return;
 
-            num.innerText = Math.round(pm25); // Mô phỏng điểm số AQI tương đương nồng độ bụi
+            num.innerText = Math.round(pm25);
 
             if (pm25 <= 12.0) {
                 card.style.backgroundColor = 'var(--aqi-good)';
@@ -223,19 +227,16 @@
             }
         }(null);
 
-        // Đổ dữ liệu lên toàn bộ giao diện
         function renderUI() {
             if (dataHistory.length === 0) return;
             
             const latest = dataHistory[dataHistory.length - 1];
             
-            // 1. Cập nhật các ô số liệu tức thời
             document.getElementById('val-pm25').innerHTML = `${latest.pm25.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
             document.getElementById('val-pm10').innerHTML = `${latest.pm10.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
             document.getElementById('val-temp').innerHTML = `${latest.temp.toFixed(1)} <span class="stat-unit">°C</span>`;
             document.getElementById('val-hum').innerHTML = `${latest.hum.toFixed(1)} <span class="stat-unit">%</span>`;
             
-            // Cập nhật banner thông minh
             const card = document.getElementById('aqi-card');
             const status = document.getElementById('aqi-status');
             const num = document.getElementById('aqi-num');
@@ -247,13 +248,11 @@
             else if (p25 <= 55.4) { card.style.backgroundColor = 'var(--aqi-unhealthy-sub)'; status.innerText = 'Kém (Kém)'; advice.innerText = 'Chỉ số không khí suy giảm. Người dân nên trang bị khẩu trang chống bụi mịn.'; }
             else { card.style.backgroundColor = 'var(--aqi-bad)'; status.innerText = 'Xấu (Unhealthy)'; advice.innerText = 'Bắt đầu ảnh hưởng xấu tới sức khỏe cộng đồng. Hạn chế ra đường.'; }
 
-            // 2. Cập nhật các trục đồ thị xu hướng
             const labels = dataHistory.map(d => (d.timeLabel || "").substring(0, 5));
             pmChart.data.labels = labels; pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25); pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10); pmChart.update();
             tempChart.data.labels = labels; tempChart.data.datasets[0].data = dataHistory.map(d => d.temp); tempChart.update();
             humChart.data.labels = labels; humChart.data.datasets[0].data = dataHistory.map(d => d.hum); humChart.update();
 
-            // 3. Xây dựng luồng lịch sử Timeline nằm ngang phía dưới
             timeline.innerHTML = '';
             const recent = dataHistory.slice(-8);
             recent.forEach((item, index) => {
@@ -263,14 +262,13 @@
                 div.innerHTML = `
                     <div class="tl-time">${displayTime}</div>
                     <div class="tl-date">${item.dateLabel || ""}</div>
-                    <div class="tl-param" style="color: #ff5252;">🌫️ ${Math.round(item.pm25)}</div>
-                    <div class="tl-param" style="color: #ffeb3b;">🌡️ ${Math.round(item.temp)}°</div>
+                    <div class="tl-param" style="color: #ef4444;">🌫️ ${Math.round(item.pm25)}</div>
+                    <div class="tl-param" style="color: #f59e0b;">🌡️ ${Math.round(item.temp)}°</div>
                 `;
                 timeline.appendChild(div);
             });
         }
 
-        // Bước A: Kéo dữ liệu quá khứ lưu đệm trên Server Render
         async function loadHistory() {
             try {
                 const response = await fetch('/api/data');
@@ -282,13 +280,13 @@
             } catch (e) { console.error("Lỗi đồng bộ API lịch sử:", e); }
         }
 
-        // Bước B: Đăng ký lắng nghe kênh dữ liệu trực tiếp thời gian thực qua MQTT WebSockets
         const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-        const myTopicUI = 'airsense/hust/tiendung_2507'; 
+        const myTopicUI = 'airsense/hust/tiendung_01'; 
 
         mqttClient.on('connect', () => {
             statusText.innerText = "Trạng thái trực tuyến: MQTT Real-time 🟢";
-            statusText.style.color = "#4caf50";
+            statusText.style.background = "#dcfce7"; // Nền xanh nhạt
+            statusText.style.color = "#166534"; // Chữ xanh đậm
             mqttClient.subscribe(myTopicUI);
         });
 
