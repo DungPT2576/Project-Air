@@ -184,13 +184,10 @@
     </div>
 
     <script>
-        // CẤU HÌNH LẠI MÀU BIỂU ĐỒ CHO GIAO DIỆN SÁNG
-        Chart.defaults.color = '#64748b'; // Chữ trục tung/trục hoành màu xám đậm
-        Chart.defaults.borderColor = '#e2e8f0'; // Kẻ ô lưới biểu đồ màu xám nhạt
+        Chart.defaults.color = '#64748b'; 
+        Chart.defaults.borderColor = '#e2e8f0'; 
 
-        // Khởi tạo đồ thị
         const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
-        // Cập nhật màu đường kẻ nhiệt ẩm đậm hơn cho dễ nhìn
         const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
         const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
 
@@ -198,55 +195,32 @@
         const timeline = document.getElementById('timeline');
         const statusText = document.getElementById('status');
 
-        void function updateAQIBanner(pm25) {
-            const card = document.getElementById('aqi-card');
-            const status = document.getElementById('aqi-status');
-            const num = document.getElementById('aqi-num');
-            const advice = document.getElementById('aqi-advice');
-
-            if (!pm25 && pm25 !== 0) return;
-
-            num.innerText = Math.round(pm25);
-
-            if (pm25 <= 12.0) {
-                card.style.backgroundColor = 'var(--aqi-good)';
-                status.innerText = 'Tốt (Good)';
-                advice.innerText = 'Không khí trong lành. Thích hợp cho mọi hoạt động ngoài trời.';
-            } else if (pm25 <= 35.4) {
-                card.style.backgroundColor = 'var(--aqi-mod)';
-                status.innerText = 'Trung bình (Moderate)';
-                advice.innerText = 'Nhóm nhạy cảm nên hạn chế vận động mạnh ngoài trời trong thời gian dài.';
-            } else if (pm25 <= 55.4) {
-                card.style.backgroundColor = 'var(--aqi-unhealthy-sub)';
-                status.innerText = 'Kém (Unhealthy)';
-                advice.innerText = 'Nhóm nhạy cảm có thể chịu ảnh hưởng sức khỏe. Nên đeo khẩu trang.';
-            } else {
-                card.style.backgroundColor = 'var(--aqi-bad)';
-                status.innerText = 'Nguy hại (Hazardous)';
-                advice.innerText = 'Cảnh báo sức khỏe nghiêm trọng. Mọi người nên đóng cửa sổ và ở trong nhà.';
-            }
-        }(null);
-
         function renderUI() {
             if (dataHistory.length === 0) return;
             
             const latest = dataHistory[dataHistory.length - 1];
             
-            document.getElementById('val-pm25').innerHTML = `${latest.pm25.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
-            document.getElementById('val-pm10').innerHTML = `${latest.pm10.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
-            document.getElementById('val-temp').innerHTML = `${latest.temp.toFixed(1)} <span class="stat-unit">°C</span>`;
-            document.getElementById('val-hum').innerHTML = `${latest.hum.toFixed(1)} <span class="stat-unit">%</span>`;
+            // Ép kiểu an toàn (Number) để chống sập giao diện nếu dữ liệu bị nhiễu
+            const p25 = Number(latest.pm25 || 0);
+            const p10 = Number(latest.pm10 || 0);
+            const tmp = Number(latest.temp || 0);
+            const hum = Number(latest.hum || 0);
+
+            document.getElementById('val-pm25').innerHTML = `${p25.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
+            document.getElementById('val-pm10').innerHTML = `${p10.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
+            document.getElementById('val-temp').innerHTML = `${tmp.toFixed(1)} <span class="stat-unit">°C</span>`;
+            document.getElementById('val-hum').innerHTML = `${hum.toFixed(1)} <span class="stat-unit">%</span>`;
             
             const card = document.getElementById('aqi-card');
             const status = document.getElementById('aqi-status');
             const num = document.getElementById('aqi-num');
             const advice = document.getElementById('aqi-advice');
-            const p25 = latest.pm25;
+            
             num.innerText = Math.round(p25);
             if (p25 <= 12.0) { card.style.backgroundColor = 'var(--aqi-good)'; status.innerText = 'Tốt (Good)'; advice.innerText = 'Không khí trong lành. Thích hợp cho mọi hoạt động ngoài trời.'; }
             else if (p25 <= 35.4) { card.style.backgroundColor = 'var(--aqi-mod)'; status.innerText = 'Khá (Moderate)'; advice.innerText = 'Nhóm nhạy cảm nên cân nhắc giảm bớt thời gian vận động ngoài trời.'; }
-            else if (p25 <= 55.4) { card.style.backgroundColor = 'var(--aqi-unhealthy-sub)'; status.innerText = 'Kém (Kém)'; advice.innerText = 'Chỉ số không khí suy giảm. Người dân nên trang bị khẩu trang chống bụi mịn.'; }
-            else { card.style.backgroundColor = 'var(--aqi-bad)'; status.innerText = 'Xấu (Unhealthy)'; advice.innerText = 'Bắt đầu ảnh hưởng xấu tới sức khỏe cộng đồng. Hạn chế ra đường.'; }
+            else if (p25 <= 55.4) { card.style.backgroundColor = 'var(--aqi-unhealthy-sub)'; status.innerText = 'Kém (Unhealthy)'; advice.innerText = 'Chỉ số không khí suy giảm. Người dân nên trang bị khẩu trang chống bụi mịn.'; }
+            else { card.style.backgroundColor = 'var(--aqi-bad)'; status.innerText = 'Xấu (Hazardous)'; advice.innerText = 'Bắt đầu ảnh hưởng xấu tới sức khỏe cộng đồng. Hạn chế ra đường.'; }
 
             const labels = dataHistory.map(d => (d.timeLabel || "").substring(0, 5));
             pmChart.data.labels = labels; pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25); pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10); pmChart.update();
@@ -280,28 +254,44 @@
             } catch (e) { console.error("Lỗi đồng bộ API lịch sử:", e); }
         }
 
-        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        // TẠO CLIENT ID NGẪU NHIÊN ĐỂ TRÁNH BỊ BROKER KÍCH RA NGOÀI
+        const uniqueClientId = 'web_' + Math.random().toString(16).substring(2, 10);
+        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+            clientId: uniqueClientId,
+            clean: true,
+            connectTimeout: 4000,
+            reconnectPeriod: 1000,
+        });
+
         const myTopicUI = 'airsense/hust/tiendung_01'; 
 
         mqttClient.on('connect', () => {
+            console.log("✅ Giao diện đã kết nối thành công với MQTT Broker!");
             statusText.innerText = "Trạng thái trực tuyến: MQTT Real-time 🟢";
-            statusText.style.background = "#dcfce7"; // Nền xanh nhạt
-            statusText.style.color = "#166534"; // Chữ xanh đậm
+            statusText.style.background = "#dcfce7"; 
+            statusText.style.color = "#166534"; 
             mqttClient.subscribe(myTopicUI);
         });
 
         mqttClient.on('message', (topic, message) => {
-            const payload = JSON.parse(message.toString());
-            const now = new Date();
-            
-            payload.timeLabel = now.toLocaleTimeString('vi-VN', { hour12: false });
-            payload.dateLabel = `${now.getDate()}/${now.getMonth() + 1}`;
-            
-            dataHistory.push(payload);
-            if (dataHistory.length > 50) dataHistory.shift(); 
-            renderUI();
+            try {
+                const payload = JSON.parse(message.toString());
+                console.log("📥 Có dữ liệu Real-time mới từ ESP32:", payload); // In ra console để theo dõi
+                
+                const now = new Date();
+                payload.timeLabel = now.toLocaleTimeString('vi-VN', { hour12: false });
+                payload.dateLabel = `${now.getDate()}/${now.getMonth() + 1}`;
+                
+                dataHistory.push(payload);
+                if (dataHistory.length > 50) dataHistory.shift(); 
+                
+                renderUI(); // Cập nhật lại giao diện ngay lập tức
+            } catch (error) {
+                console.error("⚠️ Lỗi khi xử lý gói tin MQTT:", error);
+            }
         });
 
+        // Khởi động
         loadHistory();
     </script>
 </body>
