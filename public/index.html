@@ -197,10 +197,8 @@
 
         function renderUI() {
             if (dataHistory.length === 0) return;
-            
             const latest = dataHistory[dataHistory.length - 1];
             
-            // Ép kiểu an toàn (Number) để chống sập giao diện nếu dữ liệu bị nhiễu
             const p25 = Number(latest.pm25 || 0);
             const p10 = Number(latest.pm10 || 0);
             const tmp = Number(latest.temp || 0);
@@ -254,49 +252,40 @@
             } catch (e) { console.error("Lỗi đồng bộ API lịch sử:", e); }
         }
 
-        // TẠO CLIENT ID NGẪU NHIÊN ĐỂ TRÁNH BỊ BROKER KÍCH RA NGOÀI
-        const uniqueClientId = 'web_' + Math.random().toString(16).substring(2, 10);
-        
-        // Đã đổi sang cổng 8084 của EMQX
-        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-            clientId: uniqueClientId,
-            clean: true,
-            connectTimeout: 4000,
-            reconnectPeriod: 1000,
-        });
+        // ========================================================
+        // KIẾN TRÚC MỚI: BẮT DỮ LIỆU REAL-TIME QUA KÊNH HTTP HTML5 NGUYÊN BẢN
+        // (Không còn lo bị nhà mạng hay công ty chặn tường lửa nữa)
+        // ========================================================
+        const evtSource = new EventSource('/api/stream');
 
-        const myTopicUI = 'airsense/hust/tiendung_01'; 
-
-        mqttClient.on('connect', () => {
-            console.log("✅ Giao diện đã kết nối thành công với MQTT Broker!");
-            statusText.innerText = "Trạng thái trực tuyến: MQTT Real-time 🟢";
+        evtSource.onopen = function() {
+            console.log("✅ Đã kết nối kênh đẩy dữ liệu (SSE) bảo mật 1 chiều với Render Server!");
+            statusText.innerText = "Trạng thái trực tuyến: SSE Real-time 🟢";
             statusText.style.background = "#dcfce7"; 
             statusText.style.color = "#166534"; 
-            mqttClient.subscribe(myTopicUI);
-        });
+        };
 
-        // Thêm khối bắt lỗi mạng để Console hiện thông báo nếu bị chặn
-        mqttClient.on('error', (err) => {
-            console.error("⚠️ Lỗi kết nối MQTT:", err);
-        });
-
-        mqttClient.on('message', (topic, message) => {
+        // Khi Server Node.js báo có dữ liệu mới, hàm này tự động chạy
+        evtSource.onmessage = function(event) {
             try {
-                const payload = JSON.parse(message.toString());
-                console.log("📥 Đã nhận dữ liệu Real-time mới:", payload);
-                
-                const now = new Date();
-                payload.timeLabel = now.toLocaleTimeString('vi-VN', { hour12: false });
-                payload.dateLabel = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+                const payload = JSON.parse(event.data);
+                console.log("📥 Render Server đẩy dữ liệu xuống:", payload);
                 
                 dataHistory.push(payload);
                 if (dataHistory.length > 50) dataHistory.shift(); 
                 
                 renderUI(); 
             } catch (error) {
-                console.error("⚠️ Lỗi phân tích gói tin:", error);
+                console.error("⚠️ Lỗi phân tích gói tin SSE:", error);
             }
-        });
+        };
+
+        evtSource.onerror = function(err) {
+            console.error("⚠️ Mất kết nối luồng dữ liệu, đang tự động thử lại...", err);
+            statusText.innerText = "Trạng thái: Đang kết nối lại...";
+            statusText.style.background = "#fef08a"; 
+            statusText.style.color = "#854d0e"; 
+        };
 
         // Khởi động
         loadHistory();
