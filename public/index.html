@@ -256,7 +256,9 @@
 
         // TẠO CLIENT ID NGẪU NHIÊN ĐỂ TRÁNH BỊ BROKER KÍCH RA NGOÀI
         const uniqueClientId = 'web_' + Math.random().toString(16).substring(2, 10);
-        const mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+        
+        // Đã đổi sang cổng 8084 của EMQX
+        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
             clientId: uniqueClientId,
             clean: true,
             connectTimeout: 4000,
@@ -273,21 +275,26 @@
             mqttClient.subscribe(myTopicUI);
         });
 
+        // Thêm khối bắt lỗi mạng để Console hiện thông báo nếu bị chặn
+        mqttClient.on('error', (err) => {
+            console.error("⚠️ Lỗi kết nối MQTT:", err);
+        });
+
         mqttClient.on('message', (topic, message) => {
             try {
                 const payload = JSON.parse(message.toString());
-                console.log("📥 Có dữ liệu Real-time mới từ ESP32:", payload); // In ra console để theo dõi
+                console.log("📥 Đã nhận dữ liệu Real-time mới:", payload);
                 
                 const now = new Date();
                 payload.timeLabel = now.toLocaleTimeString('vi-VN', { hour12: false });
-                payload.dateLabel = `${now.getDate()}/${now.getMonth() + 1}`;
+                payload.dateLabel = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
                 
                 dataHistory.push(payload);
                 if (dataHistory.length > 50) dataHistory.shift(); 
                 
-                renderUI(); // Cập nhật lại giao diện ngay lập tức
+                renderUI(); 
             } catch (error) {
-                console.error("⚠️ Lỗi khi xử lý gói tin MQTT:", error);
+                console.error("⚠️ Lỗi phân tích gói tin:", error);
             }
         });
 
