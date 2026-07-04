@@ -16,7 +16,7 @@ let dataHistory = []; // Bộ nhớ đệm RAM lưu tối đa 50 điểm
 // 1. KẾT NỐI SERVER VỚI MQTT BROKER (LUỒNG REAL-TIME)
 // ==========================================
 const mqttClient = mqtt.connect('mqtt://broker.emqx.io:1883');
-const myTopic = 'airsense/hust/tiendung_2507s'; // Đã đồng bộ Topic mới
+const myTopic = 'airsense/hust/tiendung_2507'; // Đã đồng bộ Topic mới
 
 mqttClient.on('connect', () => {
     console.log('✅ Máy chủ Render đã kết nối thành công với MQTT Broker!');
