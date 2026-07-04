@@ -256,7 +256,7 @@
 
         // TẠO CLIENT ID NGẪU NHIÊN ĐỂ TRÁNH BỊ BROKER KÍCH RA NGOÀI
         const uniqueClientId = 'web_' + Math.random().toString(16).substring(2, 10);
-        const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+        const mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
             clientId: uniqueClientId,
             clean: true,
             connectTimeout: 4000,
