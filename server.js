@@ -2,19 +2,41 @@ const express = require('express');
 const cors = require('cors');
 const mqtt = require('mqtt');
 const path = require('path');
+const mongoose = require('mongoose'); // Thêm thư viện MongoDB
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Phục vụ giao diện tĩnh
 app.use(express.static(path.join(__dirname, 'public')));
 
-let dataHistory = [];
-let sseClients = []; // Danh sách các trình duyệt đang mở web
+let sseClients = []; 
 
 // ==========================================
-// HÀM BƠM DỮ LIỆU XUỐNG TẤT CẢ TRÌNH DUYỆT ĐANG MỞ
+// 1. KẾT NỐI MONGODB VÀ ĐỊNH NGHĨA CẤU TRÚC (SCHEMA)
+// ==========================================
+// Thay chuỗi kết nối của bạn vào đây (Hoặc dùng biến môi trường trên Render)
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dungpt2414986:<Dungd0vd#>@airproject.arxmcfi.mongodb.net/?appName=AirProject";
+
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('✅ Đã kết nối cơ sở dữ liệu MongoDB Atlas thành công!'))
+    .catch(err => console.error('⚠️ Lỗi kết nối MongoDB:', err));
+
+// Tạo khuôn mẫu (Schema) cho dữ liệu môi trường
+const dataSchema = new mongoose.Schema({
+    pm25: Number,
+    pm10: Number,
+    temp: Number,
+    hum: Number,
+    timeLabel: String,
+    dateLabel: String,
+    createdAt: { type: Date, default: Date.now } // Tự động lưu mốc thời gian ghi vào DB
+});
+
+// Tạo Model để thao tác với bảng dữ liệu
+const SensorData = mongoose.model('SensorData', dataSchema);
+
+// ==========================================
+// HÀM BƠM DỮ LIỆU SSE (GIỮ NGUYÊN)
 // ==========================================
 function broadcastToBrowsers(data) {
     sseClients.forEach(client => {
@@ -23,40 +45,38 @@ function broadcastToBrowsers(data) {
 }
 
 // ==========================================
-// 1. KẾT NỐI MQTT (CHỈ SERVER MỚI DÙNG MQTT)
+// 2. KẾT NỐI MQTT (LƯU VÀO MONGODB)
 // ==========================================
 const mqttClient = mqtt.connect('mqtt://broker.emqx.io:1883');
-const myTopic = 'airsense/hust/tiendung_2507';
+const myTopic = 'airsense/hust/tiendung_01';
 
 mqttClient.on('connect', () => {
-    console.log('✅ Máy chủ Render đã kết nối MQTT thành công!');
+    console.log('✅ Kết nối MQTT thành công!');
     mqttClient.subscribe(myTopic);
 });
 
-mqttClient.on('message', (topic, message) => {
+mqttClient.on('message', async (topic, message) => {
     try {
         const payload = JSON.parse(message.toString());
         const now = new Date();
-        
-        // Gắn nhãn thời gian Việt Nam
         payload.timeLabel = now.toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false });
         payload.dateLabel = now.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-        dataHistory.push(payload);
-        if (dataHistory.length > 50) dataHistory.shift();
+        // Tạo bản ghi mới và LƯU VÀO MONGODB
+        const newData = new SensorData(payload);
+        await newData.save(); 
 
-        // 🚀 BƠM TRỰC TIẾP XUỐNG GIAO DIỆN WEB
         broadcastToBrowsers(payload);
-        console.log(`[MQTT REAL-TIME] Đã đẩy dữ liệu: ${payload.temp}°C`);
+        console.log(`[MQTT -> MongoDB] Đã lưu dữ liệu: ${payload.temp}°C`);
     } catch (error) {
-        console.error("⚠️ Lỗi parse MQTT:", error);
+        console.error("⚠️ Lỗi xử lý MQTT:", error);
     }
 });
 
 // ==========================================
-// 2. API HTTP POST: NHẬN DỮ LIỆU GỬI BÙ TỪ THẺ SD
+// 3. API NHẬN DỮ LIỆU ĐỒNG BỘ TỪ THẺ SD (LƯU VÀO MONGODB)
 // ==========================================
-app.post('/api/sync', (req, res) => {
+app.post('/api/sync', async (req, res) => {
     try {
         const payload = req.body;
         const parts = payload.timestamp.split(' ');
@@ -70,44 +90,45 @@ app.post('/api/sync', (req, res) => {
             dateLabel: parts[0] || '1/1/2026'
         };
 
-        dataHistory.push(syncData);
-        if (dataHistory.length > 50) dataHistory.shift();
+        // Lưu bản ghi đồng bộ bù vào MongoDB
+        const newData = new SensorData(syncData);
+        await newData.save();
 
-        // 🚀 BƠM DỮ LIỆU QUÁ KHỨ VỪA ĐỒNG BỘ LÊN GIAO DIỆN
         broadcastToBrowsers(syncData);
-        console.log(`[SD OFFLINE SYNC] Đã xử lý dữ liệu lúc: ${payload.timestamp}`);
+        console.log(`[SD SYNC -> MongoDB] Đã đồng bộ lúc: ${payload.timestamp}`);
         res.status(200).send("OK");
     } catch (error) {
-        console.error("⚠️ Lỗi đồng bộ SD:", error);
         res.status(500).send("Error");
     }
 });
 
 // ==========================================
-// 3. API GET: TRẢ VỀ LỊCH SỬ KHI VỪA MỞ TRANG WEB
+// 4. API LẤY LỊCH SỬ KHI MỞ WEB (TRUY VẤN TỪ MONGODB)
 // ==========================================
-app.get('/api/data', (req, res) => {
-    res.json(dataHistory);
+app.get('/api/data', async (req, res) => {
+    try {
+        // Truy vấn 50 bản ghi mới nhất từ MongoDB, sắp xếp theo thời gian
+        const history = await SensorData.find().sort({ createdAt: -1 }).limit(50);
+        // Đảo ngược mảng để vẽ biểu đồ đúng chiều từ trái qua phải
+        res.json(history.reverse());
+    } catch (error) {
+        res.status(500).send("Lỗi truy xuất CSDL");
+    }
 });
 
 // ==========================================
-// 4. API SSE: KÊNH GIỮ KẾT NỐI REAL-TIME VỚI TRÌNH DUYỆT
+// 5. KÊNH SSE REAL-TIME (GIỮ NGUYÊN)
 // ==========================================
 app.get('/api/stream', (req, res) => {
-    // Thiết lập Header HTTP không bao giờ ngắt kết nối
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
-
     sseClients.push(res);
-
-    req.on('close', () => {
-        sseClients = sseClients.filter(client => client !== res);
-    });
+    req.on('close', () => { sseClients = sseClients.filter(client => client !== res); });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server đang chạy tại Port ${PORT}`);
+    console.log(`🚀 Server Node.js đang chạy tại Port ${PORT}`);
 });
