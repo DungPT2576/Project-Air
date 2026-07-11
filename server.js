@@ -15,7 +15,7 @@ let sseClients = [];
 // 1. KẾT NỐI MONGODB VÀ ĐỊNH NGHĨA CẤU TRÚC (SCHEMA)
 // ==========================================
 // Thay chuỗi kết nối của bạn vào đây (Hoặc dùng biến môi trường trên Render)
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dungpt2414986:<Dungd0vd#>@airproject.arxmcfi.mongodb.net/?appName=AirProject";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dungpt2414986:Dungd0vd#@airproject.arxmcfi.mongodb.net/?appName=AirProject";
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ Đã kết nối cơ sở dữ liệu MongoDB Atlas thành công!'))
@@ -107,12 +107,11 @@ app.post('/api/sync', async (req, res) => {
 // ==========================================
 app.get('/api/data', async (req, res) => {
     try {
-        // Truy vấn 50 bản ghi mới nhất từ MongoDB, sắp xếp theo thời gian
         const history = await SensorData.find().sort({ createdAt: -1 }).limit(50);
-        // Đảo ngược mảng để vẽ biểu đồ đúng chiều từ trái qua phải
         res.json(history.reverse());
     } catch (error) {
-        res.status(500).send("Lỗi truy xuất CSDL");
+        console.error("Lỗi khi đọc MongoDB:", error); // In lỗi ra log của Render để dễ tìm
+        res.status(500).json([]); // <--- SỬA DÒNG NÀY: Trả về mảng rỗng định dạng JSON
     }
 });
 
