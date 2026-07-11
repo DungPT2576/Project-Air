@@ -48,7 +48,7 @@ function broadcastToBrowsers(data) {
 // 2. KẾT NỐI MQTT (LƯU VÀO MONGODB)
 // ==========================================
 const mqttClient = mqtt.connect('mqtt://broker.emqx.io:1883');
-const myTopic = 'airsense/hust/tiendung_01';
+const myTopic = 'airsense/hust/tiendung_2507';
 
 mqttClient.on('connect', () => {
     console.log('✅ Kết nối MQTT thành công!');
