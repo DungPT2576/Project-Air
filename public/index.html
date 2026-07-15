@@ -255,28 +255,51 @@
         // ==========================================
         
         // 1. Cấu hình cho Canvas trục Y cố định (Ẩn Line dữ liệu, hiện số trục Y)
+// ==========================================
+        // CẤU HÌNH CHART.JS ĐÃ FIX LỖI ĐƯỜNG KẺ
+        // ==========================================
+        
+        // 1. Cấu hình cho Canvas trục Y cố định (Chỉ in số, TẮT MỌI ĐƯỜNG KẺ)
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
-                // Bật trục X với màu trong suốt để cân bằng chiều cao với Canvas cuộn
                 x: { 
                     display: true, 
                     ticks: { color: 'transparent' }, 
-                    grid: { display: false, drawBorder: false } 
+                    grid: { display: false, drawBorder: false, drawTicks: false } 
                 }, 
-                y: { display: true, position: 'left' } 
+                y: { 
+                    display: true, 
+                    position: 'left',
+                    grid: {
+                        display: false,    // Tắt các đường kẻ ngang đứt đoạn
+                        drawBorder: false, // Tắt đường viền trục dọc
+                        drawTicks: false   // Tắt các vạch chia nhỏ thò ra ngoài
+                    }
+                } 
             },
             animation: false
         };
 
-        // 2. Cấu hình cho Canvas biểu đồ cuộn (Hiện Line dữ liệu, ẩn số trục Y)
+        // 2. Cấu hình cho Canvas biểu đồ cuộn (Chỉ vẽ biểu đồ và lưới, TẮT SỐ Y)
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: { 
-                x: { display: true }, 
-                y: { display: true, position: 'left', ticks: { display: false } } 
+                x: { 
+                    display: true,
+                    grid: { drawBorder: false } // Làm mượt đường viền dưới
+                }, 
+                y: { 
+                    display: true, 
+                    position: 'left', 
+                    ticks: { display: false }, 
+                    grid: {
+                        drawBorder: false, // Xóa vạch ranh giới dọc nối giữa 2 Canvas
+                        drawTicks: false   // Giấu các vạch chia để hòa làm 1 với trục trái
+                    }
+                } 
             }
         };
 
