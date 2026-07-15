@@ -5,17 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AirSense - Hệ Thống Quan Trắc Không Khí</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         :root {
             /* Tông màu sáng (Light Mode) */
-            --bg-main: #f0f2f5; /* Nền tổng thể màu xám cực nhạt giúp dịu mắt */
-            --bg-card: #ffffff; /* Nền các thẻ box màu trắng tinh */
-            --text-main: #1e293b; /* Chữ chính màu xám đen đậm */
-            --text-sub: #64748b; /* Chữ phụ/chú thích màu xám vừa */
-            --border: #e2e8f0; /* Màu viền thẻ nhạt */
+            --bg-main: #f0f2f5; 
+            --bg-card: #ffffff; 
+            --text-main: #1e293b; 
+            --text-sub: #64748b; 
+            --border: #e2e8f0; 
             
-            /* Màu cảnh báo chuẩn IQAir (Giữ nguyên vì mang tính tiêu chuẩn) */
+            /* Màu cảnh báo chuẩn IQAir */
             --aqi-good: #10b981;
             --aqi-mod: #f59e0b;
             --aqi-unhealthy-sub: #f97316;
@@ -63,7 +62,7 @@
         .aqi-banner {
             border-radius: 16px;
             padding: 32px;
-            color: #ffffff; /* Chữ trong banner luôn trắng để nổi trên nền màu cảnh báo */
+            color: #ffffff; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -90,25 +89,48 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* Đổ bóng nhẹ giúp box nổi lên */
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); 
         }
         .stat-title { font-size: 14px; color: var(--text-sub); font-weight: 600; }
         .stat-value { font-size: 28px; font-weight: 800; margin-top: 8px; color: var(--text-main); }
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
-        /* Đồ thị */
+        /* ==========================================
+           CSS MỚI: PHẦN KÉO DÃN VÀ THANH CUỘN BIỂU ĐỒ 
+           ========================================== */
         .charts-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
             gap: 20px;
         }
-        .chart-container {
+        .chart-box-wrapper {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
-            height: 260px;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        /* Khung bọc ngoài tạo thanh cuộn ngang */
+        .scroll-wrapper {
+            width: 100%;
+            overflow-x: auto; 
+            overflow-y: hidden;
+            padding-bottom: 10px; 
+            margin-top: 10px;
+        }
+        /* Định dạng thanh cuộn (Scrollbar) */
+        .scroll-wrapper::-webkit-scrollbar { height: 8px; }
+        .scroll-wrapper::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .scroll-wrapper::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        /* Khung chứa canvas sẽ bị JS kéo giãn */
+        .canvas-container {
+            height: 240px; 
+            width: 100%; 
+            position: relative;
         }
 
         /* Lịch sử dạng Timeline */
@@ -122,7 +144,7 @@
         .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
         .timeline-scroll { overflow-x: auto; display: flex; gap: 12px; padding-bottom: 8px; }
         .timeline-card {
-            background: #f8fafc; /* Màu xám siêu nhạt cho timeline card */
+            background: #f8fafc; 
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 12px 16px;
@@ -171,15 +193,37 @@
         </div>
 
         <div class="charts-section">
-            <div class="chart-container"><canvas id="pmChart"></canvas></div>
-            <div class="chart-container"><canvas id="tempChart"></canvas></div>
-            <div class="chart-container"><canvas id="humChart"></canvas></div>
+            <div class="chart-box-wrapper">
+                <div style="font-weight: 600; font-size: 14px; text-align: center;">Nồng độ Bụi PM2.5 / PM10</div>
+                <div class="scroll-wrapper" id="scroll-pm">
+                    <div class="canvas-container" id="container-pm">
+                        <canvas id="pmChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-box-wrapper">
+                <div style="font-weight: 600; font-size: 14px; text-align: center; color: #f59e0b;">Biến thiên Nhiệt độ (°C)</div>
+                <div class="scroll-wrapper" id="scroll-temp">
+                    <div class="canvas-container" id="container-temp">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-box-wrapper">
+                <div style="font-weight: 600; font-size: 14px; text-align: center; color: #0ea5e9;">Biến thiên Độ ẩm (%)</div>
+                <div class="scroll-wrapper" id="scroll-hum">
+                    <div class="canvas-container" id="container-hum">
+                        <canvas id="humChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="history-section">
             <h3>⏱️ Dữ liệu đo cuốn chiếu (8 mốc gần nhất)</h3>
-            <div class="timeline-scroll" id="timeline">
-                </div>
+            <div class="timeline-scroll" id="timeline"></div>
         </div>
     </div>
 
@@ -187,13 +231,35 @@
         Chart.defaults.color = '#64748b'; 
         Chart.defaults.borderColor = '#e2e8f0'; 
 
-        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
-        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
-        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false } });
+        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
 
         let dataHistory = [];
         const timeline = document.getElementById('timeline');
         const statusText = document.getElementById('status');
+
+        // Hàm hỗ trợ tính toán và kéo dãn độ rộng biểu đồ
+        function updateChartScroll(chartInstance, containerId, scrollWrapperId) {
+            const dataCount = chartInstance.data.labels.length;
+            const minWidthPerPoint = 35; // Chiều rộng tối thiểu cho mỗi điểm tọa độ (px)
+            
+            const container = document.getElementById(containerId);
+            const scrollWrapper = document.getElementById(scrollWrapperId);
+
+            const requiredWidth = dataCount * minWidthPerPoint;
+            // Ép biểu đồ rộng ra nếu số điểm vượt quá khung
+            if (requiredWidth > scrollWrapper.clientWidth) {
+                container.style.width = requiredWidth + 'px';
+            } else {
+                container.style.width = '100%';
+            }
+
+            // Tự động đẩy thanh cuộn sang phải cùng để luôn nhìn thấy điểm mới nhất
+            setTimeout(() => {
+                scrollWrapper.scrollLeft = scrollWrapper.scrollWidth;
+            }, 50);
+        }
 
         function renderUI() {
             if (dataHistory.length === 0) return;
@@ -220,11 +286,26 @@
             else if (p25 <= 55.4) { card.style.backgroundColor = 'var(--aqi-unhealthy-sub)'; status.innerText = 'Kém (Unhealthy)'; advice.innerText = 'Chỉ số không khí suy giảm. Người dân nên trang bị khẩu trang chống bụi mịn.'; }
             else { card.style.backgroundColor = 'var(--aqi-bad)'; status.innerText = 'Xấu (Hazardous)'; advice.innerText = 'Bắt đầu ảnh hưởng xấu tới sức khỏe cộng đồng. Hạn chế ra đường.'; }
 
+            // Gán toàn bộ mốc thời gian vào biểu đồ (Không giới hạn độ dài mảng)
             const labels = dataHistory.map(d => (d.timeLabel || "").substring(0, 5));
-            pmChart.data.labels = labels; pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25); pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10); pmChart.update();
-            tempChart.data.labels = labels; tempChart.data.datasets[0].data = dataHistory.map(d => d.temp); tempChart.update();
-            humChart.data.labels = labels; humChart.data.datasets[0].data = dataHistory.map(d => d.hum); humChart.update();
+            
+            pmChart.data.labels = labels; 
+            pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25); 
+            pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10); 
+            pmChart.update();
+            updateChartScroll(pmChart, 'container-pm', 'scroll-pm');
 
+            tempChart.data.labels = labels; 
+            tempChart.data.datasets[0].data = dataHistory.map(d => d.temp); 
+            tempChart.update();
+            updateChartScroll(tempChart, 'container-temp', 'scroll-temp');
+
+            humChart.data.labels = labels; 
+            humChart.data.datasets[0].data = dataHistory.map(d => d.hum); 
+            humChart.update();
+            updateChartScroll(humChart, 'container-hum', 'scroll-hum');
+
+            // Hiển thị 8 mốc gần nhất ở timeline dưới cùng
             timeline.innerHTML = '';
             const recent = dataHistory.slice(-8);
             recent.forEach((item, index) => {
@@ -252,10 +333,6 @@
             } catch (e) { console.error("Lỗi đồng bộ API lịch sử:", e); }
         }
 
-        // ========================================================
-        // KIẾN TRÚC MỚI: BẮT DỮ LIỆU REAL-TIME QUA KÊNH HTTP HTML5 NGUYÊN BẢN
-        // (Không còn lo bị nhà mạng hay công ty chặn tường lửa nữa)
-        // ========================================================
         const evtSource = new EventSource('/api/stream');
 
         evtSource.onopen = function() {
@@ -265,14 +342,14 @@
             statusText.style.color = "#166534"; 
         };
 
-        // Khi Server Node.js báo có dữ liệu mới, hàm này tự động chạy
         evtSource.onmessage = function(event) {
             try {
                 const payload = JSON.parse(event.data);
                 console.log("📥 Render Server đẩy dữ liệu xuống:", payload);
                 
                 dataHistory.push(payload);
-                if (dataHistory.length > 50) dataHistory.shift(); 
+                // ĐÃ XÓA LỆNH: if (dataHistory.length > 50) dataHistory.shift(); 
+                // Giữ lại tất cả dữ liệu để kéo thanh cuộn
                 
                 renderUI(); 
             } catch (error) {
@@ -287,7 +364,6 @@
             statusText.style.color = "#854d0e"; 
         };
 
-        // Khởi động
         loadHistory();
     </script>
 </body>
