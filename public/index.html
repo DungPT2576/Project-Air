@@ -46,19 +46,19 @@
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 2 CANVAS - FIX TẬN GỐC LỆCH TRỤC VÀ CẮT CHỮ
+           BỐ CỤC 2 CANVAS - CHUẨN XÁC, SÁT CẠNH
            ========================================== */
         .charts-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
         .chart-box-wrapper { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; }
 
         .chart-layout {
             display: flex;
-            align-items: flex-start; /* Không cho phép co giãn làm lệch chiều cao */
+            align-items: flex-start; 
             width: 100%;
             margin-top: 10px;
         }
 
-        /* Trục Y: Rộng 55px (đủ chứa số thập phân), chiều cao CHỐT CỨNG 240px */
+        /* Trục Y: Rộng 55px, cao 240px cố định */
         .axis-container {
             width: 55px; 
             height: 240px; 
@@ -67,19 +67,13 @@
             z-index: 10;
         }
 
-        /* Khung cuộn: Thanh cuộn sẽ mọc ra ở bên dưới Canvas, không lấn vào chiều cao đồ thị */
         .scroll-wrapper {
             flex-grow: 1; 
             overflow-x: auto; 
             overflow-y: hidden;
         }
         
-        /* Cố định chiều cao Canvas bằng đúng với Trục Y */
-        .canvas-container { 
-            height: 240px; 
-            width: 100%; 
-            position: relative; 
-        }
+        .canvas-container { height: 240px; width: 100%; position: relative; }
 
         .scroll-wrapper::-webkit-scrollbar { height: 8px; }
         .scroll-wrapper::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
@@ -173,14 +167,13 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS ĐỒNG BỘ TUYỆT ĐỐI
+        // CẤU HÌNH CHART.JS ĐÃ CÂN CHỈNH KHOẢNG CÁCH TUYỆT ĐỐI
         // ==========================================
         
         // 1. Trục Y Tĩnh (Bên trái)
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
-            // Thêm đệm dưới đáy để chữ thời gian X-Axis tàng hình có đủ không gian, đẩy lưới Y lên khớp với biểu đồ
-            layout: { padding: { bottom: 10 } }, 
+            layout: { padding: { bottom: 10 } }, // Khớp cao độ với lưới X
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
                 x: { 
@@ -191,12 +184,15 @@
                 }, 
                 y: { 
                     display: true, 
-                    position: 'left', 
+                    // THỦ THUẬT: Đặt trục ở lề PHẢI của khung 55px, sau đó lật ngược chữ (mirror) vào trong
+                    // Giúp số neo chặt sát mép biểu đồ mà không bị chém mất đuôi
+                    position: 'right', 
                     border: { display: false },
                     grid: { display: false, drawBorder: false }, 
                     ticks: { 
+                        mirror: true, // Lật chữ vào trong khung
                         font: { weight: '600' }, 
-                        padding: 5 // Đệm 5px giúp số cách viền một chút, hiển thị đẹp và không lẹm mất chữ
+                        padding: 5 // Đệm 5px cách biểu đồ bên phải một cách thanh lịch
                     } 
                 } 
             },
@@ -206,7 +202,7 @@
         // 2. Đồ thị cuộn (Bên phải)
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
-            layout: { padding: { bottom: 10 } }, // Đệm đáy y hệt trục Y để 2 bên đồng bộ 100% chiều cao
+            layout: { padding: { bottom: 10 } }, 
             plugins: { 
                 legend: { display: false },
                 tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15, 23, 42, 0.9)' }
