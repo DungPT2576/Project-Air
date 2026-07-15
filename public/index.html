@@ -46,42 +46,47 @@
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 2 CANVAS CHUẨN XÁC TỪNG PIXEL
+           BỐ CỤC 2 CANVAS - FIX TẬN GỐC LỆCH TRỤC VÀ CẮT CHỮ
            ========================================== */
         .charts-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
         .chart-box-wrapper { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; }
 
         .chart-layout {
             display: flex;
+            align-items: flex-start; /* Không cho phép co giãn làm lệch chiều cao */
             width: 100%;
-            height: 240px; 
             margin-top: 10px;
         }
 
-        /* Vùng chứa số: Cài đặt chính xác 42px để vừa vặn số thập phân, ép khoảng trắng biến mất */
+        /* Trục Y: Rộng 55px (đủ chứa số thập phân), chiều cao CHỐT CỨNG 240px */
         .axis-container {
-            width: 42px; 
+            width: 55px; 
+            height: 240px; 
             flex-shrink: 0;
             background-color: var(--bg-card);
             z-index: 10;
-            padding-bottom: 14px; /* Bù trừ chính xác chiều cao thanh cuộn (6px) + padding (8px) = 14px */
         }
 
+        /* Khung cuộn: Thanh cuộn sẽ mọc ra ở bên dưới Canvas, không lấn vào chiều cao đồ thị */
         .scroll-wrapper {
             flex-grow: 1; 
             overflow-x: auto; 
             overflow-y: hidden;
-            padding-bottom: 8px; 
         }
         
-        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
+        /* Cố định chiều cao Canvas bằng đúng với Trục Y */
+        .canvas-container { 
+            height: 240px; 
+            width: 100%; 
+            position: relative; 
+        }
+
+        .scroll-wrapper::-webkit-scrollbar { height: 8px; }
         .scroll-wrapper::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        .canvas-container { height: 100%; width: 100%; position: relative; }
 
-        .history-section { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
+        .history-section { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); margin-top: 24px;}
         .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
         .timeline-scroll { overflow-x: auto; display: flex; gap: 12px; padding-bottom: 8px; }
         .timeline-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; min-width: 110px; flex-shrink: 0; text-align: center; }
@@ -168,20 +173,20 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS ĐÃ CÂN CHỈNH KHOẢNG CÁCH
+        // CẤU HÌNH CHART.JS ĐỒNG BỘ TUYỆT ĐỐI
         // ==========================================
         
         // 1. Trục Y Tĩnh (Bên trái)
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
-            layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } }, // Xóa sạch padding thừa bóp méo biểu đồ
+            // Thêm đệm dưới đáy để chữ thời gian X-Axis tàng hình có đủ không gian, đẩy lưới Y lên khớp với biểu đồ
+            layout: { padding: { bottom: 10 } }, 
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
                 x: { 
                     display: true, 
                     border: { display: false },
                     grid: { display: false }, 
-                    // MẸO: Trục X tàng hình nhưng vẫn phải nghiêng 45 độ để tạo chiều cao tương đương biểu đồ cuộn
                     ticks: { color: 'transparent', font: { size: 11 }, maxRotation: 45, minRotation: 45 } 
                 }, 
                 y: { 
@@ -191,7 +196,7 @@
                     grid: { display: false, drawBorder: false }, 
                     ticks: { 
                         font: { weight: '600' }, 
-                        padding: 4 // Tạo khoảng lùi siêu nhỏ để không dính vào vạch ranh giới
+                        padding: 5 // Đệm 5px giúp số cách viền một chút, hiển thị đẹp và không lẹm mất chữ
                     } 
                 } 
             },
@@ -201,6 +206,7 @@
         // 2. Đồ thị cuộn (Bên phải)
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
+            layout: { padding: { bottom: 10 } }, // Đệm đáy y hệt trục Y để 2 bên đồng bộ 100% chiều cao
             plugins: { 
                 legend: { display: false },
                 tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15, 23, 42, 0.9)' }
@@ -216,14 +222,14 @@
                     display: true, 
                     position: 'left', 
                     border: { display: false },
-                    grid: { display: true, color: '#f1f5f9', drawBorder: false }, // Giữ lưới mờ, xóa vạch rìa
+                    grid: { display: true, color: '#f1f5f9', drawBorder: false }, 
                     ticks: { display: false } 
                 } 
             },
             elements: { point: { radius: 0, hitRadius: 10, hoverRadius: 4 } }
         };
 
-        // KHỞI TẠO BIỂU ĐỒ (DÙNG 2 CANVAS)
+        // KHỞI TẠO BIỂU ĐỒ (2 CANVAS)
         const pmAxis = new Chart(document.getElementById('pmAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }, { data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
         const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
         
