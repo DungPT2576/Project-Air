@@ -7,14 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            /* Tông màu sáng (Light Mode) */
             --bg-main: #f0f2f5; 
             --bg-card: #ffffff; 
             --text-main: #1e293b; 
             --text-sub: #64748b; 
             --border: #e2e8f0; 
             
-            /* Màu cảnh báo chuẩn IQAir */
             --aqi-good: #10b981;
             --aqi-mod: #f59e0b;
             --aqi-unhealthy-sub: #f97316;
@@ -37,7 +35,6 @@
             gap: 24px;
         }
 
-        /* Top Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -48,7 +45,6 @@
         .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #0f172a; }
         .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #e2e8f0; color: #475569; }
 
-        /* Khối tổng quan kiểu IQAir */
         .main-overview {
             display: grid;
             grid-template-columns: 1fr 2fr;
@@ -75,7 +71,6 @@
         .aqi-label { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .aqi-desc { font-size: 14px; opacity: 0.95; margin-top: 8px; font-weight: 500; }
 
-        /* Lưới thẻ chỉ số phụ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -96,7 +91,7 @@
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 2 CANVAS CỐ ĐỊNH TRỤC Y
+           BỐ CỤC 2 CANVAS - TỐI GIẢN DIỆN TÍCH
            ========================================== */
         .charts-section {
             display: grid;
@@ -120,16 +115,15 @@
             margin-top: 10px;
         }
 
-        /* Vùng chứa trục Y cố định bên trái */
+        /* Vùng chứa trục Y: Ép siêu nhỏ, chỉ đủ để chữ */
         .axis-container {
-            width: 65px; /* Đủ rộng để hiển thị các số thập phân */
+            width: 40px; 
             flex-shrink: 0;
             background-color: var(--bg-card);
             z-index: 10;
             padding-bottom: 24px; /* Bù trừ khoảng trống bằng độ cao của thanh cuộn */
         }
 
-        /* Vùng cuộn đồ thị bên phải */
         .scroll-wrapper {
             flex-grow: 1; 
             overflow-x: auto; 
@@ -137,11 +131,10 @@
             padding-bottom: 10px; 
         }
         
-        /* Định dạng thanh cuộn */
-        .scroll-wrapper::-webkit-scrollbar { height: 8px; }
-        .scroll-wrapper::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .scroll-wrapper::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
+        .scroll-wrapper::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        .scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         .canvas-container {
             height: 100%; 
@@ -248,80 +241,79 @@
 
     <script>
         Chart.defaults.color = '#64748b'; 
-        Chart.defaults.borderColor = '#e2e8f0'; 
+        Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS
+        // CẤU HÌNH CHART.JS TỐI GIẢN (KHÔNG ĐƯỜNG KẺ)
         // ==========================================
         
-        // 1. Cấu hình cho Canvas trục Y cố định (Ẩn Line dữ liệu, hiện số trục Y)
-// ==========================================
-        // CẤU HÌNH CHART.JS ĐÃ FIX LỖI ĐƯỜNG KẺ
-        // ==========================================
-        
-        // 1. Cấu hình cho Canvas trục Y cố định (Chỉ in số, TẮT MỌI ĐƯỜNG KẺ)
+        // 1. Trục Y Tĩnh: Chỉ hiện con số bên phải, TẮT MỌI LƯỚI VÀ RÌA
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
                 x: { 
                     display: true, 
-                    ticks: { color: 'transparent' }, 
-                    grid: { display: false, drawBorder: false, drawTicks: false } 
+                    border: { display: false },
+                    grid: { display: false }, // Tắt lưới dọc
+                    ticks: { color: 'transparent', font: { size: 11 } } // Dùng chữ tàng hình để giữ độ cao
                 }, 
                 y: { 
                     display: true, 
-                    position: 'left',
-                    grid: {
-                        display: false,    // Tắt các đường kẻ ngang đứt đoạn
-                        drawBorder: false, // Tắt đường viền trục dọc
-                        drawTicks: false   // Tắt các vạch chia nhỏ thò ra ngoài
-                    }
+                    position: 'right', // Căn số sát sang lề phải để liền mạch với đồ thị
+                    border: { display: false }, // Tắt ranh giới trục
+                    grid: { display: false },   // Tắt đường kẻ ngang
+                    ticks: { padding: 5, font: { weight: '600' } } 
                 } 
             },
             animation: false
         };
 
-        // 2. Cấu hình cho Canvas biểu đồ cuộn (Chỉ vẽ biểu đồ và lưới, TẮT SỐ Y)
+        // 2. Đồ thị cuộn: Chỉ vẽ đường cong, TẮT MỌI LƯỚI NGANG DỌC
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)'
+                }
+            },
             scales: { 
                 x: { 
-                    display: true,
-                    grid: { drawBorder: false } // Làm mượt đường viền dưới
+                    display: true, 
+                    border: { display: false },
+                    grid: { display: false }, // Tắt lưới dọc
+                    ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 }
                 }, 
                 y: { 
                     display: true, 
                     position: 'left', 
-                    ticks: { display: false }, 
-                    grid: {
-                        drawBorder: false, // Xóa vạch ranh giới dọc nối giữa 2 Canvas
-                        drawTicks: false   // Giấu các vạch chia để hòa làm 1 với trục trái
-                    }
+                    border: { display: false },
+                    grid: { display: false }, // Tắt lưới ngang
+                    ticks: { display: false } 
                 } 
+            },
+            elements: {
+                point: { radius: 0, hitRadius: 10, hoverRadius: 4 } // Xóa dấu chấm tròn, đồ thị siêu mượt
             }
         };
 
-        // KHỞI TẠO 3 CẶP BIỂU ĐỒ
-        // Bụi Mịn
+        // KHỞI TẠO BIỂU ĐỒ
         const pmAxis = new Chart(document.getElementById('pmAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }, { data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
-        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true }]}, options: scrollOptions });
+        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
         
-        // Nhiệt Độ
         const tempAxis = new Chart(document.getElementById('tempAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
-        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4 }]}, options: scrollOptions });
+        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.05)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
 
-        // Độ Ẩm
         const humAxis = new Chart(document.getElementById('humAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
-        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'transparent', tension: 0.4 }]}, options: scrollOptions });
+        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.05)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
 
-        // Biến lưu trữ lịch sử
         let dataHistory = [];
         const timeline = document.getElementById('timeline');
         const statusText = document.getElementById('status');
 
-        // Hàm hỗ trợ kéo dãn độ rộng Canvas theo số lượng điểm dữ liệu
         function updateChartScroll(chartInstance, containerId, scrollWrapperId) {
             const dataCount = chartInstance.data.labels.length;
             const minWidthPerPoint = 35; 
@@ -340,9 +332,6 @@
             }, 50);
         }
 
-        // ==========================================
-        // CẬP NHẬT GIAO DIỆN
-        // ==========================================
         function renderUI() {
             if (dataHistory.length === 0) return;
             const latest = dataHistory[dataHistory.length - 1];
@@ -352,13 +341,11 @@
             const tmp = Number(latest.temp || 0);
             const hum = Number(latest.hum || 0);
 
-            // Cập nhật số liệu ở 4 Box nhỏ
             document.getElementById('val-pm25').innerHTML = `${p25.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
             document.getElementById('val-pm10').innerHTML = `${p10.toFixed(1)} <span class="stat-unit">µg/m³</span>`;
             document.getElementById('val-temp').innerHTML = `${tmp.toFixed(1)} <span class="stat-unit">°C</span>`;
             document.getElementById('val-hum').innerHTML = `${hum.toFixed(1)} <span class="stat-unit">%</span>`;
             
-            // Cập nhật Box trạng thái AQI lớn
             const card = document.getElementById('aqi-card');
             const status = document.getElementById('aqi-status');
             const num = document.getElementById('aqi-num');
@@ -370,29 +357,24 @@
             else if (p25 <= 55.4) { card.style.backgroundColor = 'var(--aqi-unhealthy-sub)'; status.innerText = 'Kém (Unhealthy)'; advice.innerText = 'Chỉ số không khí suy giảm. Người dân nên trang bị khẩu trang chống bụi mịn.'; }
             else { card.style.backgroundColor = 'var(--aqi-bad)'; status.innerText = 'Xấu (Hazardous)'; advice.innerText = 'Bắt đầu ảnh hưởng xấu tới sức khỏe cộng đồng. Hạn chế ra đường.'; }
 
-            // Lấy toàn bộ mốc thời gian và dữ liệu
             const labels = dataHistory.map(d => (d.timeLabel || "").substring(0, 5));
             const p25Data = dataHistory.map(d => d.pm25);
             const p10Data = dataHistory.map(d => d.pm10);
             const tempData = dataHistory.map(d => d.temp);
             const humData = dataHistory.map(d => d.hum);
             
-            // Đổ dữ liệu vào Biểu đồ Bụi mịn (Cả trục tĩnh và cuộn)
             pmAxis.data.labels = labels; pmAxis.data.datasets[0].data = p25Data; pmAxis.data.datasets[1].data = p10Data; pmAxis.update();
             pmChart.data.labels = labels; pmChart.data.datasets[0].data = p25Data; pmChart.data.datasets[1].data = p10Data; pmChart.update();
             updateChartScroll(pmChart, 'container-pm', 'scroll-pm');
 
-            // Đổ dữ liệu vào Biểu đồ Nhiệt độ
             tempAxis.data.labels = labels; tempAxis.data.datasets[0].data = tempData; tempAxis.update();
             tempChart.data.labels = labels; tempChart.data.datasets[0].data = tempData; tempChart.update();
             updateChartScroll(tempChart, 'container-temp', 'scroll-temp');
 
-            // Đổ dữ liệu vào Biểu đồ Độ ẩm
             humAxis.data.labels = labels; humAxis.data.datasets[0].data = humData; humAxis.update();
             humChart.data.labels = labels; humChart.data.datasets[0].data = humData; humChart.update();
             updateChartScroll(humChart, 'container-hum', 'scroll-hum');
 
-            // Cập nhật Timeline 8 mốc gần nhất
             timeline.innerHTML = '';
             const recent = dataHistory.slice(-8);
             recent.forEach((item, index) => {
@@ -409,9 +391,6 @@
             });
         }
 
-        // ==========================================
-        // KẾT NỐI SERVER
-        // ==========================================
         async function loadHistory() {
             try {
                 const response = await fetch('/api/data');
@@ -426,7 +405,6 @@
         const evtSource = new EventSource('/api/stream');
 
         evtSource.onopen = function() {
-            console.log("✅ Đã kết nối kênh đẩy dữ liệu (SSE) bảo mật 1 chiều với Render Server!");
             statusText.innerText = "Trạng thái trực tuyến: SSE Real-time 🟢";
             statusText.style.background = "#dcfce7"; 
             statusText.style.color = "#166534"; 
@@ -438,7 +416,7 @@
                 dataHistory.push(payload);
                 renderUI(); 
             } catch (error) {
-                console.error("⚠️ Lỗi phân tích gói tin SSE:", error);
+                console.error("Lỗi phân tích SSE:", error);
             }
         };
 
@@ -448,7 +426,6 @@
             statusText.style.color = "#854d0e"; 
         };
 
-        // Bắt đầu tải lịch sử khi vừa mở trang web
         loadHistory();
     </script>
 </body>
