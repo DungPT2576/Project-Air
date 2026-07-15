@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mqtt = require('mqtt');
 const path = require('path');
-const mongoose = require('mongoose'); // Thêm thư viện MongoDB
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
@@ -14,12 +14,15 @@ let sseClients = [];
 // ==========================================
 // 1. KẾT NỐI MONGODB VÀ ĐỊNH NGHĨA CẤU TRÚC (SCHEMA)
 // ==========================================
-// Thay chuỗi kết nối của bạn vào đây (Hoặc dùng biến môi trường trên Render)
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dungpt2414986:Dungd0vd#@airproject.arxmcfi.mongodb.net/?appName=AirProject";
+// Ký tự '#' trong mật khẩu đã được mã hóa thành '%23' để tránh lỗi MongoParseError
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dungpt2414986:Dungd0vd@airproject.b9ikxf5.mongodb.net/?appName=AirProject";
 
-mongoose.connect(MONGO_URI)
+mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 30000, // Tăng sức chịu đựng mạng lên 30s
+    socketTimeoutMS: 45000           // Giữ kết nối sống lâu hơn để chống rớt mạng
+})
     .then(() => console.log('✅ Đã kết nối cơ sở dữ liệu MongoDB Atlas thành công!'))
-    .catch(err => console.error('⚠️ Lỗi kết nối MongoDB:', err));
+    .catch(err => console.error('⚠️ Lỗi kết nối MongoDB:', err.message));
 
 // Tạo khuôn mẫu (Schema) cho dữ liệu môi trường
 const dataSchema = new mongoose.Schema({
@@ -29,14 +32,13 @@ const dataSchema = new mongoose.Schema({
     hum: Number,
     timeLabel: String,
     dateLabel: String,
-    createdAt: { type: Date, default: Date.now } // Tự động lưu mốc thời gian ghi vào DB
+    createdAt: { type: Date, default: Date.now } 
 });
 
-// Tạo Model để thao tác với bảng dữ liệu
 const SensorData = mongoose.model('SensorData', dataSchema);
 
 // ==========================================
-// HÀM BƠM DỮ LIỆU SSE (GIỮ NGUYÊN)
+// HÀM BƠM DỮ LIỆU SSE 
 // ==========================================
 function broadcastToBrowsers(data) {
     sseClients.forEach(client => {
@@ -62,14 +64,13 @@ mqttClient.on('message', async (topic, message) => {
         payload.timeLabel = now.toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false });
         payload.dateLabel = now.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-        // Tạo bản ghi mới và LƯU VÀO MONGODB
         const newData = new SensorData(payload);
         await newData.save(); 
 
         broadcastToBrowsers(payload);
-        console.log(`[MQTT -> MongoDB] Đã lưu dữ liệu: ${payload.temp}°C`);
+        console.log(`[MQTT -> MongoDB] Đã lưu dữ liệu: Nhiệt độ ${payload.temp}°C | PM2.5: ${payload.pm25}`);
     } catch (error) {
-        console.error("⚠️ Lỗi xử lý MQTT:", error);
+        console.error("⚠️ Lỗi lưu dữ liệu MQTT vào MongoDB:", error.message);
     }
 });
 
@@ -90,7 +91,6 @@ app.post('/api/sync', async (req, res) => {
             dateLabel: parts[0] || '1/1/2026'
         };
 
-        // Lưu bản ghi đồng bộ bù vào MongoDB
         const newData = new SensorData(syncData);
         await newData.save();
 
@@ -110,13 +110,20 @@ app.get('/api/data', async (req, res) => {
         const history = await SensorData.find().sort({ createdAt: -1 }).limit(50);
         res.json(history.reverse());
     } catch (error) {
-        console.error("Lỗi khi đọc MongoDB:", error); // In lỗi ra log của Render để dễ tìm
-        res.status(500).json([]); // <--- SỬA DÒNG NÀY: Trả về mảng rỗng định dạng JSON
+        console.error("Lỗi khi đọc MongoDB:", error.message);
+        res.status(500).json([]); 
     }
 });
 
 // ==========================================
-// 5. KÊNH SSE REAL-TIME (GIỮ NGUYÊN)
+// 5. API KIỂM TRA TRẠNG THÁI MÁY CHỦ (HEALTH CHECK)
+// ==========================================
+app.get('/api/ping', (req, res) => {
+    res.status(200).send("Server is awake!");
+});
+
+// ==========================================
+// 6. KÊNH SSE REAL-TIME 
 // ==========================================
 app.get('/api/stream', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
