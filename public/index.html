@@ -12,7 +12,6 @@
             --text-main: #1e293b; 
             --text-sub: #64748b; 
             --border: #e2e8f0; 
-            
             --aqi-good: #10b981;
             --aqi-mod: #f59e0b;
             --aqi-unhealthy-sub: #f97316;
@@ -27,86 +26,30 @@
             padding: 24px;
         }
 
-        .dashboard {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 16px;
-        }
+        .dashboard { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #0f172a; }
         .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #e2e8f0; color: #475569; }
 
-        .main-overview {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 24px;
-        }
+        .main-overview { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+        @media (max-width: 768px) { .main-overview { grid-template-columns: 1fr; } }
 
-        @media (max-width: 768px) {
-            .main-overview { grid-template-columns: 1fr; }
-        }
-
-        .aqi-banner {
-            border-radius: 16px;
-            padding: 32px;
-            color: #ffffff; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            transition: all 0.5s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
+        .aqi-banner { border-radius: 16px; padding: 32px; color: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: all 0.5s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .aqi-value { font-size: 64px; font-weight: 800; line-height: 1; margin: 12px 0; }
         .aqi-label { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .aqi-desc { font-size: 14px; opacity: 0.95; margin-top: 8px; font-weight: 500; }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-        }
-        .stat-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); 
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .stat-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
         .stat-title { font-size: 14px; color: var(--text-sub); font-weight: 600; }
         .stat-value { font-size: 28px; font-weight: 800; margin-top: 8px; color: var(--text-main); }
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 2 CANVAS - FIX LỖI KHOẢNG TRẮNG
+           BỐ CỤC 2 CANVAS - FIX LỖI CẮT SỐ VÀ LỆCH TRỤC
            ========================================== */
-        .charts-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-            gap: 20px;
-        }
-        .chart-box-wrapper {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-        }
+        .charts-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
+        .chart-box-wrapper { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; }
 
         .chart-layout {
             display: flex;
@@ -115,20 +58,20 @@
             margin-top: 10px;
         }
 
-        /* Vùng chứa trục Y: Rộng 45px để chữ lớn không bị nuốt */
+        /* Vùng chứa số: Tăng lên 55px để đủ không gian cho số thập phân không bị lẹm */
         .axis-container {
-            width: 45px; 
+            width: 55px; 
             flex-shrink: 0;
             background-color: var(--bg-card);
             z-index: 10;
-            padding-bottom: 24px; 
+            padding-bottom: 14px; /* Bù trừ chính xác độ cao của thanh cuộn + padding */
         }
 
         .scroll-wrapper {
             flex-grow: 1; 
             overflow-x: auto; 
             overflow-y: hidden;
-            padding-bottom: 10px; 
+            padding-bottom: 8px; 
         }
         
         .scroll-wrapper::-webkit-scrollbar { height: 6px; }
@@ -136,31 +79,12 @@
         .scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .canvas-container {
-            height: 100%; 
-            width: 100%; 
-            position: relative;
-        }
+        .canvas-container { height: 100%; width: 100%; position: relative; }
 
-        /* Lịch sử dạng Timeline */
-        .history-section {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-        }
+        .history-section { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
         .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
         .timeline-scroll { overflow-x: auto; display: flex; gap: 12px; padding-bottom: 8px; }
-        .timeline-card {
-            background: #f8fafc; 
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 16px;
-            min-width: 110px;
-            flex-shrink: 0;
-            text-align: center;
-        }
+        .timeline-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; min-width: 110px; flex-shrink: 0; text-align: center; }
         .tl-time { font-weight: 700; font-size: 14px; color: var(--text-main); }
         .tl-date { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 500; }
         .tl-param { font-size: 13px; margin-top: 4px; font-weight: 600; }
@@ -244,15 +168,12 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS - KÉO SỐ SÁT BIỂU ĐỒ
+        // CẤU HÌNH CHART.JS - PHIÊN BẢN CÂN CHỈNH LẠI
         // ==========================================
         
-        // 1. Trục Y Tĩnh (Bên trái): Chỉ in số, KHÔNG lưới, KHÔNG đường viền
+        // 1. Trục Y Tĩnh (Bên trái): Đã cách mép 8px để số hiện trọn vẹn, không có lưới
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
-            layout: {
-                padding: { right: 5 } // MẸO VÀNG: Ép đệm lề phải 5px để số không bị cắt mất nét
-            },
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
                 x: { 
@@ -263,25 +184,24 @@
                 }, 
                 y: { 
                     display: true, 
-                    position: 'right', // CĂN SÁT LỀ PHẢI (Dính liền vào biểu đồ)
-                    border: { display: false }, 
-                    grid: { display: false }, 
-                    ticks: { font: { weight: '600' }, padding: 0 } // Xóa khoảng cách mặc định
+                    position: 'left', 
+                    border: { display: false },
+                    grid: { display: false }, // Tắt lưới bên trục số
+                    ticks: { 
+                        font: { weight: '600' }, 
+                        padding: 8 // Cách chữ số ra khỏi lề để không bị che
+                    } 
                 } 
             },
             animation: false
         };
 
-        // 2. Đồ thị cuộn (Bên phải): CÓ lưới kẻ mờ, KHÔNG số trục Y
+        // 2. Đồ thị cuộn (Bên phải): Hiển thị lưới vuông vức bên trong đồ thị
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
             plugins: { 
                 legend: { display: false },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)'
-                }
+                tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15, 23, 42, 0.9)' }
             },
             scales: { 
                 x: { 
@@ -294,16 +214,14 @@
                     display: true, 
                     position: 'left', 
                     border: { display: false },
-                    grid: { display: true, color: '#f1f5f9' }, 
+                    grid: { display: true, color: '#f1f5f9' }, // Bật lưới mờ bên trong biểu đồ
                     ticks: { display: false } 
                 } 
             },
-            elements: {
-                point: { radius: 0, hitRadius: 10, hoverRadius: 4 } 
-            }
+            elements: { point: { radius: 0, hitRadius: 10, hoverRadius: 4 } }
         };
 
-        // KHỞI TẠO BIỂU ĐỒ
+        // KHỞI TẠO BIỂU ĐỒ (DÙNG 2 CANVAS)
         const pmAxis = new Chart(document.getElementById('pmAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }, { data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
         const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
         
@@ -325,7 +243,7 @@
 
             const requiredWidth = dataCount * minWidthPerPoint;
             if (requiredWidth > scrollWrapper.clientWidth) {
-                container.style.width = requiredWidth + 'px';
+                container.style.width = requiredWidth + 'px'; 
             } else {
                 container.style.width = '100%';
             }
