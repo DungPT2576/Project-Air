@@ -91,7 +91,7 @@
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 2 CANVAS - TỐI GIẢN DIỆN TÍCH
+           BỐ CỤC 2 CANVAS - FIX LỖI CẮT CHỮ
            ========================================== */
         .charts-section {
             display: grid;
@@ -115,13 +115,13 @@
             margin-top: 10px;
         }
 
-        /* Vùng chứa trục Y: Ép siêu nhỏ, chỉ đủ để chữ */
+        /* Vùng chứa trục Y: Rộng 45px để chữ không bị cắt */
         .axis-container {
-            width: 40px; 
+            width: 45px; 
             flex-shrink: 0;
             background-color: var(--bg-card);
             z-index: 10;
-            padding-bottom: 24px; /* Bù trừ khoảng trống bằng độ cao của thanh cuộn */
+            padding-bottom: 24px; 
         }
 
         .scroll-wrapper {
@@ -244,10 +244,10 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS TỐI GIẢN (KHÔNG ĐƯỜNG KẺ)
+        // CẤU HÌNH CHART.JS - PHIÊN BẢN CHUẨN XÁC
         // ==========================================
         
-        // 1. Trục Y Tĩnh: Chỉ hiện con số bên phải, TẮT MỌI LƯỚI VÀ RÌA
+        // 1. Trục Y Tĩnh (Bên trái): Chỉ in số, KHÔNG lưới, KHÔNG đường viền
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
@@ -255,21 +255,21 @@
                 x: { 
                     display: true, 
                     border: { display: false },
-                    grid: { display: false }, // Tắt lưới dọc
-                    ticks: { color: 'transparent', font: { size: 11 } } // Dùng chữ tàng hình để giữ độ cao
+                    grid: { display: false }, 
+                    ticks: { color: 'transparent', font: { size: 11 } } 
                 }, 
                 y: { 
                     display: true, 
-                    position: 'right', // Căn số sát sang lề phải để liền mạch với đồ thị
-                    border: { display: false }, // Tắt ranh giới trục
-                    grid: { display: false },   // Tắt đường kẻ ngang
-                    ticks: { padding: 5, font: { weight: '600' } } 
+                    position: 'left', // Giữ bên trái để số không bị tràn lề
+                    border: { display: false }, 
+                    grid: { display: false }, // Tắt toàn bộ đường lưới và vạch chia
+                    ticks: { font: { weight: '600' } } 
                 } 
             },
             animation: false
         };
 
-        // 2. Đồ thị cuộn: Chỉ vẽ đường cong, TẮT MỌI LƯỚI NGANG DỌC
+        // 2. Đồ thị cuộn (Bên phải): CÓ lưới kẻ mờ, KHÔNG số trục Y
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
             plugins: { 
@@ -284,19 +284,19 @@
                 x: { 
                     display: true, 
                     border: { display: false },
-                    grid: { display: false }, // Tắt lưới dọc
+                    grid: { display: true, color: '#f1f5f9' }, // Bật lưới dọc mờ
                     ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 }
                 }, 
                 y: { 
                     display: true, 
                     position: 'left', 
                     border: { display: false },
-                    grid: { display: false }, // Tắt lưới ngang
-                    ticks: { display: false } 
+                    grid: { display: true, color: '#f1f5f9' }, // Bật lưới ngang mờ
+                    ticks: { display: false } // Giấu các con số đi
                 } 
             },
             elements: {
-                point: { radius: 0, hitRadius: 10, hoverRadius: 4 } // Xóa dấu chấm tròn, đồ thị siêu mượt
+                point: { radius: 0, hitRadius: 10, hoverRadius: 4 } // Đồ thị mượt mà không chấm tròn
             }
         };
 
