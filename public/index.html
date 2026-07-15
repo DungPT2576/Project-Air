@@ -12,6 +12,7 @@
             --text-main: #1e293b; 
             --text-sub: #64748b; 
             --border: #e2e8f0; 
+            
             --aqi-good: #10b981;
             --aqi-mod: #f59e0b;
             --aqi-unhealthy-sub: #f97316;
@@ -26,43 +27,140 @@
             padding: 24px;
         }
 
-        .dashboard { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; }
+        .dashboard {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 16px;
+        }
         .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #0f172a; }
         .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #e2e8f0; color: #475569; }
 
-        .main-overview { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
-        @media (max-width: 768px) { .main-overview { grid-template-columns: 1fr; } }
+        .main-overview {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+        }
 
-        .aqi-banner { border-radius: 16px; padding: 32px; color: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; transition: all 0.5s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        @media (max-width: 768px) {
+            .main-overview { grid-template-columns: 1fr; }
+        }
+
+        .aqi-banner {
+            border-radius: 16px;
+            padding: 32px;
+            color: #ffffff; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.5s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
         .aqi-value { font-size: 64px; font-weight: 800; line-height: 1; margin: 12px 0; }
         .aqi-label { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .aqi-desc { font-size: 14px; opacity: 0.95; margin-top: 8px; font-weight: 500; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        .stat-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); 
+        }
         .stat-title { font-size: 14px; color: var(--text-sub); font-weight: 600; }
         .stat-value { font-size: 28px; font-weight: 800; margin-top: 8px; color: var(--text-main); }
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 1 CANVAS MỚI - SIÊU GỌN GÀNG
+           BỐ CỤC 2 CANVAS - FIX LỖI KHOẢNG TRẮNG
            ========================================== */
-        .charts-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
-        .chart-box-wrapper { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+        }
+        .chart-box-wrapper {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
 
-        .scroll-wrapper { width: 100%; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; margin-top: 10px; }
-        .scroll-wrapper::-webkit-scrollbar { height: 8px; }
+        .chart-layout {
+            display: flex;
+            width: 100%;
+            height: 240px; 
+            margin-top: 10px;
+        }
+
+        /* Vùng chứa trục Y: Rộng 45px để chữ lớn không bị nuốt */
+        .axis-container {
+            width: 45px; 
+            flex-shrink: 0;
+            background-color: var(--bg-card);
+            z-index: 10;
+            padding-bottom: 24px; 
+        }
+
+        .scroll-wrapper {
+            flex-grow: 1; 
+            overflow-x: auto; 
+            overflow-y: hidden;
+            padding-bottom: 10px; 
+        }
+        
+        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
         .scroll-wrapper::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .canvas-container { height: 240px; width: 100%; position: relative; }
+        .canvas-container {
+            height: 100%; 
+            width: 100%; 
+            position: relative;
+        }
 
-        .history-section { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
+        /* Lịch sử dạng Timeline */
+        .history-section {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
         .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
         .timeline-scroll { overflow-x: auto; display: flex; gap: 12px; padding-bottom: 8px; }
-        .timeline-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; min-width: 110px; flex-shrink: 0; text-align: center; }
+        .timeline-card {
+            background: #f8fafc; 
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            min-width: 110px;
+            flex-shrink: 0;
+            text-align: center;
+        }
         .tl-time { font-weight: 700; font-size: 14px; color: var(--text-main); }
         .tl-date { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 500; }
         .tl-param { font-size: 13px; margin-top: 4px; font-weight: 600; }
@@ -106,22 +204,31 @@
         <div class="charts-section">
             <div class="chart-box-wrapper">
                 <div style="font-weight: 600; font-size: 14px; text-align: center;">Nồng độ Bụi PM2.5 / PM10</div>
-                <div class="scroll-wrapper" id="scroll-pm">
-                    <div class="canvas-container" id="container-pm"><canvas id="pmChart"></canvas></div>
+                <div class="chart-layout">
+                    <div class="axis-container"><canvas id="pmAxis"></canvas></div>
+                    <div class="scroll-wrapper" id="scroll-pm">
+                        <div class="canvas-container" id="container-pm"><canvas id="pmChart"></canvas></div>
+                    </div>
                 </div>
             </div>
             
             <div class="chart-box-wrapper">
                 <div style="font-weight: 600; font-size: 14px; text-align: center; color: #f59e0b;">Biến thiên Nhiệt độ (°C)</div>
-                <div class="scroll-wrapper" id="scroll-temp">
-                    <div class="canvas-container" id="container-temp"><canvas id="tempChart"></canvas></div>
+                <div class="chart-layout">
+                    <div class="axis-container"><canvas id="tempAxis"></canvas></div>
+                    <div class="scroll-wrapper" id="scroll-temp">
+                        <div class="canvas-container" id="container-temp"><canvas id="tempChart"></canvas></div>
+                    </div>
                 </div>
             </div>
 
             <div class="chart-box-wrapper">
                 <div style="font-weight: 600; font-size: 14px; text-align: center; color: #0ea5e9;">Biến thiên Độ ẩm (%)</div>
-                <div class="scroll-wrapper" id="scroll-hum">
-                    <div class="canvas-container" id="container-hum"><canvas id="humChart"></canvas></div>
+                <div class="chart-layout">
+                    <div class="axis-container"><canvas id="humAxis"></canvas></div>
+                    <div class="scroll-wrapper" id="scroll-hum">
+                        <div class="canvas-container" id="container-hum"><canvas id="humChart"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -137,14 +244,44 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS - TRỤC Y BÊN PHẢI MƯỢT MÀ
+        // CẤU HÌNH CHART.JS - KÉO SỐ SÁT BIỂU ĐỒ
         // ==========================================
-        const commonChartOptions = {
-            responsive: true, 
-            maintainAspectRatio: false,
+        
+        // 1. Trục Y Tĩnh (Bên trái): Chỉ in số, KHÔNG lưới, KHÔNG đường viền
+        const axisOptions = {
+            responsive: true, maintainAspectRatio: false,
+            layout: {
+                padding: { right: 5 } // MẸO VÀNG: Ép đệm lề phải 5px để số không bị cắt mất nét
+            },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { 
+                x: { 
+                    display: true, 
+                    border: { display: false },
+                    grid: { display: false }, 
+                    ticks: { color: 'transparent', font: { size: 11 } } 
+                }, 
+                y: { 
+                    display: true, 
+                    position: 'right', // CĂN SÁT LỀ PHẢI (Dính liền vào biểu đồ)
+                    border: { display: false }, 
+                    grid: { display: false }, 
+                    ticks: { font: { weight: '600' }, padding: 0 } // Xóa khoảng cách mặc định
+                } 
+            },
+            animation: false
+        };
+
+        // 2. Đồ thị cuộn (Bên phải): CÓ lưới kẻ mờ, KHÔNG số trục Y
+        const scrollOptions = {
+            responsive: true, maintainAspectRatio: false,
             plugins: { 
                 legend: { display: false },
-                tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15, 23, 42, 0.9)' }
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)'
+                }
             },
             scales: { 
                 x: { 
@@ -155,19 +292,26 @@
                 }, 
                 y: { 
                     display: true, 
-                    position: 'right', // TOÀN BỘ CÁC SỐ SẼ NẰM BÊN PHẢI
+                    position: 'left', 
                     border: { display: false },
-                    grid: { display: true, color: '#f1f5f9' }, // Bật lại lưới vuông đẹp mắt
-                    ticks: { font: { weight: '600' } } 
+                    grid: { display: true, color: '#f1f5f9' }, 
+                    ticks: { display: false } 
                 } 
             },
-            elements: { point: { radius: 0, hitRadius: 10, hoverRadius: 4 } }
+            elements: {
+                point: { radius: 0, hitRadius: 10, hoverRadius: 4 } 
+            }
         };
 
-        // KHỞI TẠO 3 BIỂU ĐỒ (Đã xóa các bản sao Axis)
-        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: commonChartOptions });
-        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.05)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: commonChartOptions });
-        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.05)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: commonChartOptions });
+        // KHỞI TẠO BIỂU ĐỒ
+        const pmAxis = new Chart(document.getElementById('pmAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }, { data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
+        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
+        
+        const tempAxis = new Chart(document.getElementById('tempAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
+        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.05)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
+
+        const humAxis = new Chart(document.getElementById('humAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
+        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.05)', tension: 0.4, fill: true, borderWidth: 2 }]}, options: scrollOptions });
 
         let dataHistory = [];
         const timeline = document.getElementById('timeline');
@@ -180,14 +324,12 @@
             const scrollWrapper = document.getElementById(scrollWrapperId);
 
             const requiredWidth = dataCount * minWidthPerPoint;
-            // Bù thêm 40px ở cuối để không che khuất cột chữ số bên phải
             if (requiredWidth > scrollWrapper.clientWidth) {
-                container.style.width = (requiredWidth + 40) + 'px'; 
+                container.style.width = requiredWidth + 'px';
             } else {
                 container.style.width = '100%';
             }
 
-            // Tự động đẩy kịch thanh cuộn sang phải để luôn thấy dữ liệu mới nhất (và thấy trục Y)
             setTimeout(() => {
                 scrollWrapper.scrollLeft = scrollWrapper.scrollWidth;
             }, 50);
@@ -224,12 +366,15 @@
             const tempData = dataHistory.map(d => d.temp);
             const humData = dataHistory.map(d => d.hum);
             
+            pmAxis.data.labels = labels; pmAxis.data.datasets[0].data = p25Data; pmAxis.data.datasets[1].data = p10Data; pmAxis.update();
             pmChart.data.labels = labels; pmChart.data.datasets[0].data = p25Data; pmChart.data.datasets[1].data = p10Data; pmChart.update();
             updateChartScroll(pmChart, 'container-pm', 'scroll-pm');
 
+            tempAxis.data.labels = labels; tempAxis.data.datasets[0].data = tempData; tempAxis.update();
             tempChart.data.labels = labels; tempChart.data.datasets[0].data = tempData; tempChart.update();
             updateChartScroll(tempChart, 'container-temp', 'scroll-temp');
 
+            humAxis.data.labels = labels; humAxis.data.datasets[0].data = humData; humAxis.update();
             humChart.data.labels = labels; humChart.data.datasets[0].data = humData; humChart.update();
             updateChartScroll(humChart, 'container-hum', 'scroll-hum');
 
