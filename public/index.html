@@ -46,7 +46,7 @@
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 2 CANVAS - FIX LỖI CẮT SỐ VÀ LỆCH TRỤC
+           BỐ CỤC 2 CANVAS CHUẨN XÁC TỪNG PIXEL
            ========================================== */
         .charts-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
         .chart-box-wrapper { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; }
@@ -58,13 +58,13 @@
             margin-top: 10px;
         }
 
-        /* Vùng chứa số: Tăng lên 55px để đủ không gian cho số thập phân không bị lẹm */
+        /* Vùng chứa số: Cài đặt chính xác 42px để vừa vặn số thập phân, ép khoảng trắng biến mất */
         .axis-container {
-            width: 55px; 
+            width: 42px; 
             flex-shrink: 0;
             background-color: var(--bg-card);
             z-index: 10;
-            padding-bottom: 14px; /* Bù trừ chính xác độ cao của thanh cuộn + padding */
+            padding-bottom: 14px; /* Bù trừ chính xác chiều cao thanh cuộn (6px) + padding (8px) = 14px */
         }
 
         .scroll-wrapper {
@@ -168,35 +168,37 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS - PHIÊN BẢN CÂN CHỈNH LẠI
+        // CẤU HÌNH CHART.JS ĐÃ CÂN CHỈNH KHOẢNG CÁCH
         // ==========================================
         
-        // 1. Trục Y Tĩnh (Bên trái): Đã cách mép 8px để số hiện trọn vẹn, không có lưới
+        // 1. Trục Y Tĩnh (Bên trái)
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
+            layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } }, // Xóa sạch padding thừa bóp méo biểu đồ
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
                 x: { 
                     display: true, 
                     border: { display: false },
                     grid: { display: false }, 
-                    ticks: { color: 'transparent', font: { size: 11 } } 
+                    // MẸO: Trục X tàng hình nhưng vẫn phải nghiêng 45 độ để tạo chiều cao tương đương biểu đồ cuộn
+                    ticks: { color: 'transparent', font: { size: 11 }, maxRotation: 45, minRotation: 45 } 
                 }, 
                 y: { 
                     display: true, 
                     position: 'left', 
                     border: { display: false },
-                    grid: { display: false }, // Tắt lưới bên trục số
+                    grid: { display: false, drawBorder: false }, 
                     ticks: { 
                         font: { weight: '600' }, 
-                        padding: 8 // Cách chữ số ra khỏi lề để không bị che
+                        padding: 4 // Tạo khoảng lùi siêu nhỏ để không dính vào vạch ranh giới
                     } 
                 } 
             },
             animation: false
         };
 
-        // 2. Đồ thị cuộn (Bên phải): Hiển thị lưới vuông vức bên trong đồ thị
+        // 2. Đồ thị cuộn (Bên phải)
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
             plugins: { 
@@ -214,7 +216,7 @@
                     display: true, 
                     position: 'left', 
                     border: { display: false },
-                    grid: { display: true, color: '#f1f5f9' }, // Bật lưới mờ bên trong biểu đồ
+                    grid: { display: true, color: '#f1f5f9', drawBorder: false }, // Giữ lưới mờ, xóa vạch rìa
                     ticks: { display: false } 
                 } 
             },
