@@ -91,7 +91,7 @@
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           BỐ CỤC 2 CANVAS - FIX LỖI CẮT CHỮ
+           BỐ CỤC 2 CANVAS - FIX LỖI KHOẢNG TRẮNG
            ========================================== */
         .charts-section {
             display: grid;
@@ -115,7 +115,7 @@
             margin-top: 10px;
         }
 
-        /* Vùng chứa trục Y: Rộng 45px để chữ không bị cắt */
+        /* Vùng chứa trục Y: Rộng 45px để chữ lớn không bị nuốt */
         .axis-container {
             width: 45px; 
             flex-shrink: 0;
@@ -244,12 +244,15 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS - PHIÊN BẢN CHUẨN XÁC
+        // CẤU HÌNH CHART.JS - KÉO SỐ SÁT BIỂU ĐỒ
         // ==========================================
         
         // 1. Trục Y Tĩnh (Bên trái): Chỉ in số, KHÔNG lưới, KHÔNG đường viền
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
+            layout: {
+                padding: { right: 5 } // MẸO VÀNG: Ép đệm lề phải 5px để số không bị cắt mất nét
+            },
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
                 x: { 
@@ -260,10 +263,10 @@
                 }, 
                 y: { 
                     display: true, 
-                    position: 'left', // Giữ bên trái để số không bị tràn lề
+                    position: 'right', // CĂN SÁT LỀ PHẢI (Dính liền vào biểu đồ)
                     border: { display: false }, 
-                    grid: { display: false }, // Tắt toàn bộ đường lưới và vạch chia
-                    ticks: { font: { weight: '600' } } 
+                    grid: { display: false }, 
+                    ticks: { font: { weight: '600' }, padding: 0 } // Xóa khoảng cách mặc định
                 } 
             },
             animation: false
@@ -284,19 +287,19 @@
                 x: { 
                     display: true, 
                     border: { display: false },
-                    grid: { display: true, color: '#f1f5f9' }, // Bật lưới dọc mờ
+                    grid: { display: true, color: '#f1f5f9' }, 
                     ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 45 }
                 }, 
                 y: { 
                     display: true, 
                     position: 'left', 
                     border: { display: false },
-                    grid: { display: true, color: '#f1f5f9' }, // Bật lưới ngang mờ
-                    ticks: { display: false } // Giấu các con số đi
+                    grid: { display: true, color: '#f1f5f9' }, 
+                    ticks: { display: false } 
                 } 
             },
             elements: {
-                point: { radius: 0, hitRadius: 10, hoverRadius: 4 } // Đồ thị mượt mà không chấm tròn
+                point: { radius: 0, hitRadius: 10, hoverRadius: 4 } 
             }
         };
 
