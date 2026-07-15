@@ -7,14 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            /* Tông màu sáng (Light Mode) */
             --bg-main: #f0f2f5; 
             --bg-card: #ffffff; 
             --text-main: #1e293b; 
             --text-sub: #64748b; 
             --border: #e2e8f0; 
             
-            /* Màu cảnh báo chuẩn IQAir */
             --aqi-good: #10b981;
             --aqi-mod: #f59e0b;
             --aqi-unhealthy-sub: #f97316;
@@ -37,7 +35,6 @@
             gap: 24px;
         }
 
-        /* Top Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -48,16 +45,12 @@
         .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #0f172a; }
         .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #e2e8f0; color: #475569; }
 
-        /* Khối tổng quan kiểu IQAir */
         .main-overview {
             display: grid;
             grid-template-columns: 1fr 2fr;
             gap: 24px;
         }
-
-        @media (max-width: 768px) {
-            .main-overview { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) { .main-overview { grid-template-columns: 1fr; } }
 
         .aqi-banner {
             border-radius: 16px;
@@ -69,13 +62,12 @@
             align-items: center;
             text-align: center;
             transition: all 0.5s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .aqi-value { font-size: 64px; font-weight: 800; line-height: 1; margin: 12px 0; }
         .aqi-label { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .aqi-desc { font-size: 14px; opacity: 0.95; margin-top: 8px; font-weight: 500; }
 
-        /* Lưới thẻ chỉ số phụ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -96,7 +88,7 @@
         .stat-unit { font-size: 14px; color: var(--text-sub); font-weight: 500; }
 
         /* ==========================================
-           CSS MỚI: PHẦN KÉO DÃN VÀ THANH CUỘN BIỂU ĐỒ 
+           CSS MỚI: BỐ CỤC 2 CANVAS BẢO LƯU TRỤC Y
            ========================================== */
         .charts-section {
             display: grid;
@@ -112,28 +104,41 @@
             display: flex;
             flex-direction: column;
         }
-        /* Khung bọc ngoài tạo thanh cuộn ngang */
-        .scroll-wrapper {
+
+        .chart-layout {
+            display: flex;
             width: 100%;
+            height: 240px; 
+            margin-top: 10px;
+        }
+
+        /* Vùng chứa trục Y cố định bên trái */
+        .axis-container {
+            width: 42px; /* Độ rộng dành riêng cho các con số */
+            flex-shrink: 0;
+            background-color: var(--bg-card);
+            z-index: 10;
+        }
+
+        /* Vùng cuộn đồ thị bên phải */
+        .scroll-wrapper {
+            flex-grow: 1; 
             overflow-x: auto; 
             overflow-y: hidden;
             padding-bottom: 10px; 
-            margin-top: 10px;
         }
-        /* Định dạng thanh cuộn (Scrollbar) */
+        
         .scroll-wrapper::-webkit-scrollbar { height: 8px; }
         .scroll-wrapper::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
         
-        /* Khung chứa canvas sẽ bị JS kéo giãn */
         .canvas-container {
-            height: 240px; 
+            height: 100%; 
             width: 100%; 
             position: relative;
         }
 
-        /* Lịch sử dạng Timeline */
         .history-section {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
@@ -143,15 +148,7 @@
         }
         .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
         .timeline-scroll { overflow-x: auto; display: flex; gap: 12px; padding-bottom: 8px; }
-        .timeline-card {
-            background: #f8fafc; 
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 16px;
-            min-width: 110px;
-            flex-shrink: 0;
-            text-align: center;
-        }
+        .timeline-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; min-width: 110px; flex-shrink: 0; text-align: center; }
         .tl-time { font-weight: 700; font-size: 14px; color: var(--text-main); }
         .tl-date { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 500; }
         .tl-param { font-size: 13px; margin-top: 4px; font-weight: 600; }
@@ -195,27 +192,30 @@
         <div class="charts-section">
             <div class="chart-box-wrapper">
                 <div style="font-weight: 600; font-size: 14px; text-align: center;">Nồng độ Bụi PM2.5 / PM10</div>
-                <div class="scroll-wrapper" id="scroll-pm">
-                    <div class="canvas-container" id="container-pm">
-                        <canvas id="pmChart"></canvas>
+                <div class="chart-layout">
+                    <div class="axis-container"><canvas id="pmAxis"></canvas></div>
+                    <div class="scroll-wrapper" id="scroll-pm">
+                        <div class="canvas-container" id="container-pm"><canvas id="pmChart"></canvas></div>
                     </div>
                 </div>
             </div>
             
             <div class="chart-box-wrapper">
                 <div style="font-weight: 600; font-size: 14px; text-align: center; color: #f59e0b;">Biến thiên Nhiệt độ (°C)</div>
-                <div class="scroll-wrapper" id="scroll-temp">
-                    <div class="canvas-container" id="container-temp">
-                        <canvas id="tempChart"></canvas>
+                <div class="chart-layout">
+                    <div class="axis-container"><canvas id="tempAxis"></canvas></div>
+                    <div class="scroll-wrapper" id="scroll-temp">
+                        <div class="canvas-container" id="container-temp"><canvas id="tempChart"></canvas></div>
                     </div>
                 </div>
             </div>
 
             <div class="chart-box-wrapper">
                 <div style="font-weight: 600; font-size: 14px; text-align: center; color: #0ea5e9;">Biến thiên Độ ẩm (%)</div>
-                <div class="scroll-wrapper" id="scroll-hum">
-                    <div class="canvas-container" id="container-hum">
-                        <canvas id="humChart"></canvas>
+                <div class="chart-layout">
+                    <div class="axis-container"><canvas id="humAxis"></canvas></div>
+                    <div class="scroll-wrapper" id="scroll-hum">
+                        <div class="canvas-container" id="container-hum"><canvas id="humChart"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -231,31 +231,54 @@
         Chart.defaults.color = '#64748b'; 
         Chart.defaults.borderColor = '#e2e8f0'; 
 
-        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'transparent', tension: 0.4 }]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        // Cấu hình chung cho biểu đồ Trục Y (Ẩn Line, ẩn Tooltip, ẩn X)
+        const axisOptions = {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: true, position: 'left' } },
+            animation: false
+        };
+
+        // Cấu hình chung cho biểu đồ Cuộn ngang (Hiện Line, ẩn số Y để nối tiếp vào trục cố định)
+        const scrollOptions = {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { 
+                x: { display: true }, 
+                y: { display: true, position: 'left', ticks: { display: false } } // Ẩn các con số trục Y
+            }
+        };
+
+        // KHỞI TẠO 3 CẶP BIỂU ĐỒ
+        // 1. Bụi Mịn
+        const pmAxis = new Chart(document.getElementById('pmAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }, { data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
+        const pmChart = new Chart(document.getElementById('pmChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'PM2.5', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true }, { label: 'PM10', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true }]}, options: scrollOptions });
+        
+        // 2. Nhiệt Độ
+        const tempAxis = new Chart(document.getElementById('tempAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
+        const tempChart = new Chart(document.getElementById('tempChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Nhiệt độ (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4 }]}, options: scrollOptions });
+
+        // 3. Độ Ẩm
+        const humAxis = new Chart(document.getElementById('humAxis').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: 'transparent', backgroundColor: 'transparent', pointRadius: 0 }] }, options: axisOptions });
+        const humChart = new Chart(document.getElementById('humChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Độ ẩm (%)', data: [], borderColor: '#0ea5e9', backgroundColor: 'transparent', tension: 0.4 }]}, options: scrollOptions });
 
         let dataHistory = [];
         const timeline = document.getElementById('timeline');
         const statusText = document.getElementById('status');
 
-        // Hàm hỗ trợ tính toán và kéo dãn độ rộng biểu đồ
         function updateChartScroll(chartInstance, containerId, scrollWrapperId) {
             const dataCount = chartInstance.data.labels.length;
-            const minWidthPerPoint = 35; // Chiều rộng tối thiểu cho mỗi điểm tọa độ (px)
-            
+            const minWidthPerPoint = 35; 
             const container = document.getElementById(containerId);
             const scrollWrapper = document.getElementById(scrollWrapperId);
 
             const requiredWidth = dataCount * minWidthPerPoint;
-            // Ép biểu đồ rộng ra nếu số điểm vượt quá khung
             if (requiredWidth > scrollWrapper.clientWidth) {
                 container.style.width = requiredWidth + 'px';
             } else {
                 container.style.width = '100%';
             }
 
-            // Tự động đẩy thanh cuộn sang phải cùng để luôn nhìn thấy điểm mới nhất
             setTimeout(() => {
                 scrollWrapper.scrollLeft = scrollWrapper.scrollWidth;
             }, 50);
@@ -286,26 +309,25 @@
             else if (p25 <= 55.4) { card.style.backgroundColor = 'var(--aqi-unhealthy-sub)'; status.innerText = 'Kém (Unhealthy)'; advice.innerText = 'Chỉ số không khí suy giảm. Người dân nên trang bị khẩu trang chống bụi mịn.'; }
             else { card.style.backgroundColor = 'var(--aqi-bad)'; status.innerText = 'Xấu (Hazardous)'; advice.innerText = 'Bắt đầu ảnh hưởng xấu tới sức khỏe cộng đồng. Hạn chế ra đường.'; }
 
-            // Gán toàn bộ mốc thời gian vào biểu đồ (Không giới hạn độ dài mảng)
             const labels = dataHistory.map(d => (d.timeLabel || "").substring(0, 5));
+            const p25Data = dataHistory.map(d => d.pm25);
+            const p10Data = dataHistory.map(d => d.pm10);
+            const tempData = dataHistory.map(d => d.temp);
+            const humData = dataHistory.map(d => d.hum);
             
-            pmChart.data.labels = labels; 
-            pmChart.data.datasets[0].data = dataHistory.map(d => d.pm25); 
-            pmChart.data.datasets[1].data = dataHistory.map(d => d.pm10); 
-            pmChart.update();
+            // Cập nhật cả 2 biểu đồ (Trục Y cố định và Line hiển thị) để lưới auto-scale khớp nhau
+            pmAxis.data.labels = labels; pmAxis.data.datasets[0].data = p25Data; pmAxis.data.datasets[1].data = p10Data; pmAxis.update();
+            pmChart.data.labels = labels; pmChart.data.datasets[0].data = p25Data; pmChart.data.datasets[1].data = p10Data; pmChart.update();
             updateChartScroll(pmChart, 'container-pm', 'scroll-pm');
 
-            tempChart.data.labels = labels; 
-            tempChart.data.datasets[0].data = dataHistory.map(d => d.temp); 
-            tempChart.update();
+            tempAxis.data.labels = labels; tempAxis.data.datasets[0].data = tempData; tempAxis.update();
+            tempChart.data.labels = labels; tempChart.data.datasets[0].data = tempData; tempChart.update();
             updateChartScroll(tempChart, 'container-temp', 'scroll-temp');
 
-            humChart.data.labels = labels; 
-            humChart.data.datasets[0].data = dataHistory.map(d => d.hum); 
-            humChart.update();
+            humAxis.data.labels = labels; humAxis.data.datasets[0].data = humData; humAxis.update();
+            humChart.data.labels = labels; humChart.data.datasets[0].data = humData; humChart.update();
             updateChartScroll(humChart, 'container-hum', 'scroll-hum');
 
-            // Hiển thị 8 mốc gần nhất ở timeline dưới cùng
             timeline.innerHTML = '';
             const recent = dataHistory.slice(-8);
             recent.forEach((item, index) => {
@@ -345,12 +367,7 @@
         evtSource.onmessage = function(event) {
             try {
                 const payload = JSON.parse(event.data);
-                console.log("📥 Render Server đẩy dữ liệu xuống:", payload);
-                
                 dataHistory.push(payload);
-                // ĐÃ XÓA LỆNH: if (dataHistory.length > 50) dataHistory.shift(); 
-                // Giữ lại tất cả dữ liệu để kéo thanh cuộn
-                
                 renderUI(); 
             } catch (error) {
                 console.error("⚠️ Lỗi phân tích gói tin SSE:", error);
@@ -358,7 +375,6 @@
         };
 
         evtSource.onerror = function(err) {
-            console.error("⚠️ Mất kết nối luồng dữ liệu, đang tự động thử lại...", err);
             statusText.innerText = "Trạng thái: Đang kết nối lại...";
             statusText.style.background = "#fef08a"; 
             statusText.style.color = "#854d0e"; 
