@@ -10,7 +10,7 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 1. KẾT NỐI MONGODB
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dungpt2414986:Dungd0vd%23@airproject.arxmcfi.mongodb.net/?appName=AirProject";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dungpt2414986:Dungd0vd@airproject.b9ikxf5.mongodb.net/?appName=AirProject";
 mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 30000, socketTimeoutMS: 45000 })
     .then(() => console.log('✅ Đã kết nối MongoDB Atlas thành công!'))
     .catch(err => console.error('⚠️ Lỗi MongoDB:', err.message));
