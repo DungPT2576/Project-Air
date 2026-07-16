@@ -49,7 +49,7 @@
            BỐ CỤC 2 CANVAS - CHUẨN XÁC, SÁT CẠNH
            ========================================== */
         .charts-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
-        .chart-box-wrapper { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;padding-left: 2px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .chart-box-wrapper { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); display: flex; flex-direction: column; }
 
         .chart-layout {
             display: flex;
@@ -58,31 +58,35 @@
             margin-top: 10px;
         }
 
-        /* Trục Y: Rộng 55px, cao 240px cố định */
-        .axis-container {
-            width: 55px; 
-            height: 240px; 
-            flex-shrink: 0;
-            background-color: var(--bg-card);
-            z-index: 10;
-        }
-
-        .scroll-wrapper {
-            flex-grow: 1; 
-            overflow-x: auto; 
-            overflow-y: hidden;
-        }
-        
+        .axis-container { width: 55px; height: 240px; flex-shrink: 0; background-color: var(--bg-card); z-index: 10; }
+        .scroll-wrapper { flex-grow: 1; overflow-x: auto; overflow-y: hidden; }
         .canvas-container { height: 240px; width: 100%; position: relative; }
 
-        .scroll-wrapper::-webkit-scrollbar { height: 8px; }
+        /* Định dạng thanh cuộn chung cho Chart */
+        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
         .scroll-wrapper::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+        /* ==========================================
+           LỊCH SỬ CUỐN CHIẾU (ĐÃ THÊM THANH CUỘN)
+           ========================================== */
         .history-section { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); margin-top: 24px;}
         .history-section h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
-        .timeline-scroll { overflow-x: auto; display: flex; gap: 12px; padding-bottom: 8px; }
+        
+        .timeline-scroll { 
+            overflow-x: auto; 
+            display: flex; 
+            gap: 12px; 
+            padding-bottom: 10px; 
+        }
+        
+        /* Đồng bộ giao diện thanh cuộn Timeline với Chart */
+        .timeline-scroll::-webkit-scrollbar { height: 6px; }
+        .timeline-scroll::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        .timeline-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .timeline-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
         .timeline-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; min-width: 110px; flex-shrink: 0; text-align: center; }
         .tl-time { font-weight: 700; font-size: 14px; color: var(--text-main); }
         .tl-date { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; font-weight: 500; }
@@ -157,7 +161,7 @@
         </div>
 
         <div class="history-section">
-            <h3>⏱️ Dữ liệu đo cuốn chiếu (8 mốc gần nhất)</h3>
+            <h3>⏱️ Dữ liệu đo lịch sử (Trượt ngang để xem)</h3>
             <div class="timeline-scroll" id="timeline"></div>
         </div>
     </div>
@@ -167,13 +171,11 @@
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         // ==========================================
-        // CẤU HÌNH CHART.JS ĐÃ CÂN CHỈNH KHOẢNG CÁCH TUYỆT ĐỐI
+        // CẤU HÌNH CHART.JS
         // ==========================================
-        
-        // 1. Trục Y Tĩnh (Bên trái)
         const axisOptions = {
             responsive: true, maintainAspectRatio: false,
-            layout: { padding: { bottom: 10 } }, // Khớp cao độ với lưới X
+            layout: { padding: { bottom: 10 } }, 
             plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: { 
                 x: { 
@@ -184,22 +186,15 @@
                 }, 
                 y: { 
                     display: true, 
-                    // THỦ THUẬT: Đặt trục ở lề PHẢI của khung 55px, sau đó lật ngược chữ (mirror) vào trong
-                    // Giúp số neo chặt sát mép biểu đồ mà không bị chém mất đuôi
                     position: 'right', 
                     border: { display: false },
                     grid: { display: false, drawBorder: false }, 
-                    ticks: { 
-                        mirror: true, // Lật chữ vào trong khung
-                        font: { weight: '600' }, 
-                        padding: 5 // Đệm 5px cách biểu đồ bên phải một cách thanh lịch
-                    } 
+                    ticks: { mirror: true, font: { weight: '600' }, padding: 5 } 
                 } 
             },
             animation: false
         };
 
-        // 2. Đồ thị cuộn (Bên phải)
         const scrollOptions = {
             responsive: true, maintainAspectRatio: false,
             layout: { padding: { bottom: 10 } }, 
@@ -300,10 +295,10 @@
             humChart.data.labels = labels; humChart.data.datasets[0].data = humData; humChart.update();
             updateChartScroll(humChart, 'container-hum', 'scroll-hum');
 
+            // Hiển thị TOÀN BỘ lịch sử đo vào Timeline để có thể trượt ngang
             timeline.innerHTML = '';
-            const recent = dataHistory.slice(-8);
-            recent.forEach((item, index) => {
-                let displayTime = (index === recent.length - 1) ? "Bây giờ" : (item.timeLabel || "").substring(0, 5);
+            dataHistory.forEach((item, index) => {
+                let displayTime = (index === dataHistory.length - 1) ? "Bây giờ" : (item.timeLabel || "").substring(0, 5);
                 const div = document.createElement('div');
                 div.className = 'timeline-card';
                 div.innerHTML = `
@@ -314,8 +309,16 @@
                 `;
                 timeline.appendChild(div);
             });
+
+            // Ép dải Timeline tự động kéo tít sang rìa phải để luôn thấy dữ liệu mới nhất
+            setTimeout(() => {
+                timeline.scrollLeft = timeline.scrollWidth;
+            }, 50);
         }
 
+        // ==========================================
+        // CƠ CHẾ ĐỒNG BỘ THỜI GIAN THỰC (HTTP POLLING)
+        // ==========================================
         async function loadHistory() {
             try {
                 const response = await fetch('/api/data');
@@ -324,34 +327,22 @@
                     dataHistory = history;
                     renderUI();
                 }
-            } catch (e) { console.error("Lỗi đồng bộ API lịch sử:", e); }
+                statusText.innerText = "Trạng thái: Trực tuyến (HTTP Polling) 🟢";
+                statusText.style.background = "#dcfce7"; 
+                statusText.style.color = "#166534"; 
+            } catch (e) { 
+                console.error("Lỗi đồng bộ API:", e); 
+                statusText.innerText = "Trạng thái: Đang tải lại...";
+                statusText.style.background = "#fee2e2"; 
+                statusText.style.color = "#991b1b"; 
+            }
         }
 
-        const evtSource = new EventSource('/api/stream');
-
-        evtSource.onopen = function() {
-            statusText.innerText = "Trạng thái trực tuyến: SSE Real-time 🟢";
-            statusText.style.background = "#dcfce7"; 
-            statusText.style.color = "#166534"; 
-        };
-
-        evtSource.onmessage = function(event) {
-            try {
-                const payload = JSON.parse(event.data);
-                dataHistory.push(payload);
-                renderUI(); 
-            } catch (error) {
-                console.error("Lỗi phân tích SSE:", error);
-            }
-        };
-
-        evtSource.onerror = function(err) {
-            statusText.innerText = "Trạng thái: Đang kết nối lại...";
-            statusText.style.background = "#fef08a"; 
-            statusText.style.color = "#854d0e"; 
-        };
-
+        // Tải dữ liệu lần đầu ngay khi mở Web
         loadHistory();
+        
+        // Tự động quét lại dữ liệu mới mỗi 10 giây
+        setInterval(loadHistory, 10000);
     </script>
 </body>
 </html>
